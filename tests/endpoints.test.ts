@@ -44,4 +44,33 @@ describe('extractDislike', () => {
       extractDislike('https://api.bilibili.com/x/feed/dislike?aid=170001&upId=999', null),
     ).toEqual({ kind: 'video', aid: '170001', bvid: undefined, mid: '999' });
   });
+
+  describe('real bilibili home-feed feedback payloads', () => {
+    const FEEDBACK_URL = 'https://api.bilibili.com/x/web-interface/feedback/dislike?w_rid=abc&wts=1';
+    const VIDEO_BODY =
+      'app_id=100&platform=5&goto=av&id=117195749202028&mid=1340863293&feedback_page=1&reason_id=1&csrf=x';
+    const UPER_BODY =
+      'app_id=100&platform=5&goto=av&id=117195749202028&mid=1340863293&feedback_page=1&reason_id=4&csrf=x';
+
+    it('parses real bilibili 内容不感兴趣 payload (reason_id=1) as video', () => {
+      expect(extractDislike(FEEDBACK_URL, VIDEO_BODY)).toEqual({
+        kind: 'video',
+        aid: '117195749202028',
+        bvid: undefined,
+        mid: '1340863293',
+      });
+    });
+
+    it('parses real bilibili 不想看此 up 主 payload (reason_id=4) as upper', () => {
+      expect(extractDislike(FEEDBACK_URL, UPER_BODY)).toEqual({ kind: 'upper', mid: '1340863293' });
+    });
+
+    it('fails closed on unknown reason_id', () => {
+      expect(extractDislike(FEEDBACK_URL, VIDEO_BODY.replace('reason_id=1', 'reason_id=9'))).toBeNull();
+    });
+
+    it('accepts the real feedback path through the URL gate', () => {
+      expect(extractDislike(FEEDBACK_URL, VIDEO_BODY)).not.toBeNull();
+    });
+  });
 });

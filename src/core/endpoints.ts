@@ -64,12 +64,25 @@ export function extractDislike(url: string, body: string | null): DislikeCapture
   if (!gate.test(path)) return null;
   if (/\/(log|report)(\/|$)/i.test(path)) return null;
   const p = collectParams(url, body);
-  const aid = normalizeAid(p.get('aid')) ?? normalizeAid(p.get('id_Av')) ?? avFromId(p.get('id'));
-  const bvid = p.get('bvid') && /BV[0-9A-Za-z]{10}/.test(p.get('bvid')!) ? p.get('bvid')! : undefined;
   const goto = p.get('goto') ?? '';
+  const aid =
+    normalizeAid(p.get('aid')) ??
+    normalizeAid(p.get('id_Av')) ??
+    avFromId(p.get('id')) ??
+    (goto === 'av' ? normalizeAid(p.get('id')) : null);
+  const bvid = p.get('bvid') && /BV[0-9A-Za-z]{10}/.test(p.get('bvid')!) ? p.get('bvid')! : undefined;
   const mid =
     extractMid(p.get('mid')) ?? extractMid(p.get('upId')) ?? (goto === 'up' ? extractMid(p.get('id')) : null);
   const hasVideoId = aid !== null || bvid !== undefined;
+
+  const reasonId = p.get('reason_id');
+  if (reasonId === '1') {
+    return hasVideoId ? { kind: 'video', aid: aid ?? undefined, bvid, mid: mid ?? undefined } : null;
+  }
+  if (reasonId === '4') {
+    return mid ? { kind: 'upper', mid } : null;
+  }
+  if (reasonId) return null;
 
   if (goto === 'up' || (mid && !hasVideoId)) {
     return mid ? { kind: 'upper', mid } : null;
