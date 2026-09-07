@@ -44,7 +44,9 @@ export function createChromeStorage(): KVStorage {
       await chrome.storage.local.remove(key);
     },
     onChange(cb) {
-      const l = () => cb();
+      const l = (changes: Record<string, unknown>, areaName: string) => {
+        if (areaName === 'local' && STORAGE_KEY in changes) cb();
+      };
       chrome.storage.onChanged.addListener(l);
       return () => chrome.storage.onChanged.removeListener(l);
     },
@@ -80,7 +82,9 @@ export async function addVideoRule(
   const state = await loadState(s);
   const existing = state.videos[rule.aid];
   if (existing) {
-    state.videos[rule.aid] = { ...existing, ...Object.fromEntries(Object.entries(rule).filter(([, v]) => v !== undefined)) };
+    const merged = { ...existing, ...Object.fromEntries(Object.entries(rule).filter(([, v]) => v !== undefined)) };
+    if (JSON.stringify(merged) === JSON.stringify(existing)) return false;
+    state.videos[rule.aid] = merged;
     await saveState(s, state);
     return false;
   }

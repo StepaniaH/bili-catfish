@@ -28,6 +28,33 @@ it('addVideoRule enriches existing entry, no duplicate', async () => {
   expect(state.videos['1'].title).toBe('T');
 });
 
+it('addVideoRule identical enrich is a no-op write', async () => {
+  const s = mem();
+  const payload = { aid: '1', bvid: 'BVA', title: 'T', upMid: '946974', upName: '老番茄' };
+  const cb = vi.fn();
+  const off = onStateChange(s, cb);
+  await addVideoRule(s, payload);
+  const firesAfterFirst = cb.mock.calls.length;
+  const result = await addVideoRule(s, payload);
+  expect(result).toBe(false);
+  expect(cb.mock.calls.length).toBe(firesAfterFirst);
+  off();
+});
+
+it('addVideoRule enrich with new non-empty field still writes', async () => {
+  const s = mem();
+  const payload = { aid: '1', bvid: 'BVA', title: 'T', upMid: '946974', upName: '老番茄' };
+  const cb = vi.fn();
+  const off = onStateChange(s, cb);
+  await addVideoRule(s, payload);
+  const firesAfterFirst = cb.mock.calls.length;
+  const result = await addVideoRule(s, { ...payload, title: 'T2' });
+  expect(result).toBe(false);
+  expect(cb.mock.calls.length).toBe(firesAfterFirst + 1);
+  expect((await loadState(s)).videos['1'].title).toBe('T2');
+  off();
+});
+
 it('addUperRule dedupes by mid and keeps name', async () => {
   const s = mem();
   await addUperRule(s, { mid: '946974', name: '老番茄' });
