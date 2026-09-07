@@ -151,6 +151,7 @@ export function matchMenuFallback(ownText: string, itemContainsVideoLink: boolea
   const isDislike = /不喜欢/.test(ownText);
   if (!isVideo && !isDislike) return null;
   if (ownText.length > 12) return null;
+  if (/分区/.test(ownText)) return null; // 分区规则不做（产品边界）
   return isUper ? 'uper' : 'video';
 }
 

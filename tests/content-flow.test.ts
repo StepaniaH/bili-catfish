@@ -48,6 +48,13 @@ describe('matchMenuFallback', () => {
     expect(matchMenuFallback('不喜欢该UP主', true)).toBeNull();
   });
 
+  it('matches promo menu labels (屏蔽推广面板)', () => {
+    expect(matchMenuFallback('不想看该视频', false)).toBe('video');
+    expect(matchMenuFallback('up 主不感兴趣', false)).toBe('uper');
+    expect(matchMenuFallback('相似内容过多', false)).toBeNull();
+    expect(matchMenuFallback('分区不感兴趣', false)).toBeNull();
+  });
+
   it('ignores non-menu text', () => {
     expect(matchMenuFallback('点赞 1.2万', false)).toBeNull();
     expect(matchMenuFallback('', false)).toBeNull();
