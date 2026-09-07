@@ -8,13 +8,13 @@
   "background": { "service_worker": "background.js", "type": "module" },
   "content_scripts": [
     {
-      "matches": ["https://www.bilibili.com/", "https://www.bilibili.com/index.html*", "https://www.bilibili.com/video/*", "https://search.bilibili.com/*"],
+      "matches": ["https://www.bilibili.com/*", "https://search.bilibili.com/*"],
       "js": ["capture.js"],
       "run_at": "document_start",
       "world": "MAIN"
     },
     {
-      "matches": ["https://www.bilibili.com/", "https://www.bilibili.com/index.html*", "https://www.bilibili.com/video/*", "https://search.bilibili.com/*"],
+      "matches": ["https://www.bilibili.com/*", "https://search.bilibili.com/*"],
       "js": ["content.js"],
       "css": ["styles.css"],
       "run_at": "document_idle"

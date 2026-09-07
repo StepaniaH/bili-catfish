@@ -88,6 +88,31 @@ it('setPaused toggles; clearAll empties', async () => {
   expect(await loadState(s)).toEqual(emptyState());
 });
 
+it('paused mode blocks new rule writes until resumed', async () => {
+  const s = mem();
+  await setPaused(s, true);
+  expect(await addVideoRule(s, { aid: '1' })).toBe(false);
+  expect(await addUperRule(s, { mid: '2' })).toBe(false);
+  const st = await loadState(s);
+  expect(st.paused).toBe(true);
+  expect(st.videos).toEqual({});
+  expect(st.upers).toEqual({});
+  await setPaused(s, false);
+  expect(await addVideoRule(s, { aid: '1' })).toBe(true);
+  expect(await addUperRule(s, { mid: '2' })).toBe(true);
+});
+
+it('concurrent addVideoRule and addUperRule are serialized (no lost write)', async () => {
+  const s = mem();
+  await Promise.all([
+    addVideoRule(s, { aid: '1' }),
+    addUperRule(s, { mid: '2' }),
+  ]);
+  const st = await loadState(s);
+  expect(st.videos['1'].aid).toBe('1');
+  expect(st.upers['2'].mid).toBe('2');
+});
+
 it('loadState falls back to empty state on corrupt data', async () => {
   const s = mem();
   await s.set('bcf-state', { videos: 'not-an-object' });

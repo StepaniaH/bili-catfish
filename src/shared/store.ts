@@ -75,74 +75,95 @@ export async function saveState(s: KVStorage, state: BlockState): Promise<void> 
   await s.set(STORAGE_KEY, state);
 }
 
+let chain = Promise.resolve();
+function serialize<T>(fn: () => Promise<T>): Promise<T> {
+  const p = chain.then(fn);
+  chain = p.then(() => undefined, () => undefined);
+  return p;
+}
+
 export async function addVideoRule(
   s: KVStorage,
   rule: Omit<VideoRule, 'blockedAt'>,
 ): Promise<boolean> {
-  const state = await loadState(s);
-  const existing = state.videos[rule.aid];
-  if (existing) {
-    const merged = { ...existing, ...Object.fromEntries(Object.entries(rule).filter(([, v]) => v !== undefined)) };
-    if (JSON.stringify(merged) === JSON.stringify(existing)) return false;
-    state.videos[rule.aid] = merged;
+  return serialize(async () => {
+    const state = await loadState(s);
+    if (state.paused) return false;
+    const existing = state.videos[rule.aid];
+    if (existing) {
+      const merged = { ...existing, ...Object.fromEntries(Object.entries(rule).filter(([, v]) => v !== undefined)) };
+      if (JSON.stringify(merged) === JSON.stringify(existing)) return false;
+      state.videos[rule.aid] = merged;
+      await saveState(s, state);
+      return false;
+    }
+    state.videos[rule.aid] = { ...rule, blockedAt: Date.now() };
     await saveState(s, state);
-    return false;
-  }
-  state.videos[rule.aid] = { ...rule, blockedAt: Date.now() };
-  await saveState(s, state);
-  return true;
+    return true;
+  });
 }
 
 export async function addUperRule(
   s: KVStorage,
   rule: Omit<UperRule, 'blockedAt'>,
 ): Promise<boolean> {
-  const state = await loadState(s);
-  const existing = state.upers[rule.mid];
-  if (existing) {
-    if (rule.name && !existing.name) {
-      state.upers[rule.mid] = { ...existing, name: rule.name };
-      await saveState(s, state);
+  return serialize(async () => {
+    const state = await loadState(s);
+    if (state.paused) return false;
+    const existing = state.upers[rule.mid];
+    if (existing) {
+      if (rule.name && !existing.name) {
+        state.upers[rule.mid] = { ...existing, name: rule.name };
+        await saveState(s, state);
+      }
+      return false;
     }
-    return false;
-  }
-  state.upers[rule.mid] = { ...rule, blockedAt: Date.now() };
-  await saveState(s, state);
-  return true;
+    state.upers[rule.mid] = { ...rule, blockedAt: Date.now() };
+    await saveState(s, state);
+    return true;
+  });
 }
 
 export async function removeVideoRule(s: KVStorage, id: string): Promise<boolean> {
-  const state = await loadState(s);
-  if (state.videos[id]) {
-    delete state.videos[id];
-    await saveState(s, state);
-    return true;
-  }
-  const key = Object.values(state.videos).find((v) => v.bvid === id)?.aid;
-  if (key) {
-    delete state.videos[key];
-    await saveState(s, state);
-    return true;
-  }
-  return false;
+  return serialize(async () => {
+    const state = await loadState(s);
+    if (state.videos[id]) {
+      delete state.videos[id];
+      await saveState(s, state);
+      return true;
+    }
+    const key = Object.values(state.videos).find((v) => v.bvid === id)?.aid;
+    if (key) {
+      delete state.videos[key];
+      await saveState(s, state);
+      return true;
+    }
+    return false;
+  });
 }
 
 export async function removeUperRule(s: KVStorage, mid: string): Promise<boolean> {
-  const state = await loadState(s);
-  if (!state.upers[mid]) return false;
-  delete state.upers[mid];
-  await saveState(s, state);
-  return true;
+  return serialize(async () => {
+    const state = await loadState(s);
+    if (!state.upers[mid]) return false;
+    delete state.upers[mid];
+    await saveState(s, state);
+    return true;
+  });
 }
 
 export async function setPaused(s: KVStorage, paused: boolean): Promise<void> {
-  const state = await loadState(s);
-  state.paused = paused;
-  await saveState(s, state);
+  await serialize(async () => {
+    const state = await loadState(s);
+    state.paused = paused;
+    await saveState(s, state);
+  });
 }
 
 export async function clearAll(s: KVStorage): Promise<void> {
-  await saveState(s, emptyState());
+  await serialize(async () => {
+    await saveState(s, emptyState());
+  });
 }
 
 export function onStateChange(s: KVStorage, cb: (state: BlockState) => void): () => void {

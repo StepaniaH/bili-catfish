@@ -1,6 +1,6 @@
 // @vitest-environment jsdom
 import { describe, it, expect, vi } from 'vitest';
-import { reconcileCards, type ReconcileDeps } from '../src/content/index';
+import { matchMenuFallback, reconcileCards, type ReconcileDeps } from '../src/content/index';
 import { emptyState } from '../src/shared/types';
 
 function makeCard(bvid: string): HTMLElement {
@@ -22,6 +22,30 @@ function makeDeps(over: Partial<ReconcileDeps> = {}): ReconcileDeps {
 }
 
 let state = emptyState();
+
+describe('matchMenuFallback', () => {
+  it('matches short video-dislike labels', () => {
+    expect(matchMenuFallback('不感兴趣该视频', false)).toBe('video');
+  });
+
+  it('matches uper dislike labels', () => {
+    expect(matchMenuFallback('不喜欢该UP主', false)).toBe('uper');
+  });
+
+  it('ignores long text such as card titles', () => {
+    expect(matchMenuFallback('新人UP主教你做饭，不感兴趣速来看', false)).toBeNull();
+  });
+
+  it('ignores items that contain a video link (card ancestors)', () => {
+    expect(matchMenuFallback('不感兴趣', true)).toBeNull();
+    expect(matchMenuFallback('不喜欢该UP主', true)).toBeNull();
+  });
+
+  it('ignores non-menu text', () => {
+    expect(matchMenuFallback('点赞 1.2万', false)).toBeNull();
+    expect(matchMenuFallback('', false)).toBeNull();
+  });
+});
 
 describe('reconcileCards', () => {
   it('applies overlay when uper rule matches card', async () => {

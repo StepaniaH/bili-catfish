@@ -107,6 +107,16 @@ async function recordCapture(url: string, body: string | null): Promise<void> {
 }
 
 /* DOM 兜底捕获：点「不感兴趣/不喜欢」菜单项时，就近找卡片拿 bvid */
+export function matchMenuFallback(ownText: string, itemContainsVideoLink: boolean): 'video' | 'uper' | null {
+  if (itemContainsVideoLink) return null;
+  const isUper = /UP主|up主/i.test(ownText);
+  const isVideo = /不感兴趣|不想看/.test(ownText);
+  const isDislike = /不喜欢/.test(ownText);
+  if (!isVideo && !isDislike) return null;
+  if (ownText.length > 12) return null;
+  return isUper ? 'uper' : 'video';
+}
+
 function installDomFallback(): void {
   document.addEventListener(
     'click',
@@ -115,19 +125,17 @@ function installDomFallback(): void {
       if (!t) return;
       const item = t.closest<HTMLElement>('li, .van-popover-item, [class*="menu-item"], [class*="popover-item"]');
       if (!item) return;
-      const text = (item.textContent ?? '').trim();
-      const isUper = /UP主|up主/i.test(text);
-      const isVideo = /不感兴趣|不想看/.test(text);
-      if (!isUper && !isVideo) return;
+      const ownText = (t.textContent ?? '').trim();
+      const kind = matchMenuFallback(ownText, item.querySelector('a[href*="/video/"]') !== null);
+      if (!kind) return;
       const card = item.closest('.bili-video-card, .video-page-card, .video-list-item, li');
-      const href = card?.querySelector<HTMLAnchorElement>('a[href*="/video/"]')?.href
-        ?? item.querySelector<HTMLAnchorElement>('a[href*="/video/"]')?.href;
+      const href = card?.querySelector<HTMLAnchorElement>('a[href*="/video/"]')?.href;
       if (!href) return;
       const bvid = /BV[0-9A-Za-z]{10}/.exec(href)?.[0];
       if (!bvid) return;
       void (async () => {
         const info = (await lookup.lookup([{ bvid }])).get(cacheKey({ bvid }));
-        if (isUper) {
+        if (kind === 'uper') {
           const mid = info?.mid;
           if (!mid) return;
           if (await addUperRule(storage, { mid, name: info?.upName })) showToast('已屏蔽该 UP 主');

@@ -34,4 +34,14 @@ describe('extractDislike', () => {
   it('returns null when dislike endpoint has no usable ids', () => {
     expect(extractDislike('https://api.bilibili.com/x/feed/dislike?feedback=1', null)).toBeNull();
   });
+
+  it('ignores telemetry endpoints like /player/feedback/log', () => {
+    expect(extractDislike('https://api.bilibili.com/x/player/feedback/log?aid=1', null)).toBeNull();
+  });
+
+  it('does not let upId shadow a valid aid (mid still carried)', () => {
+    expect(
+      extractDislike('https://api.bilibili.com/x/feed/dislike?aid=170001&upId=999', null),
+    ).toEqual({ kind: 'video', aid: '170001', bvid: undefined, mid: '999' });
+  });
 });

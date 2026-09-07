@@ -54,16 +54,26 @@ function avFromId(raw: string | null): string | null {
 
 export function extractDislike(url: string, body: string | null): DislikeCapture | null {
   if (!url || !/dislike|feedback/i.test(url)) return null;
+  const gate = /(^|\/)(dislike|feedback)/i;
+  let path = url;
+  try {
+    path = new URL(url, 'https://www.bilibili.com').pathname;
+  } catch {
+    /* 无法解析 URL，退回用原始串匹配 */
+  }
+  if (!gate.test(path)) return null;
+  if (/\/(log|report)(\/|$)/i.test(path)) return null;
   const p = collectParams(url, body);
   const aid = normalizeAid(p.get('aid')) ?? normalizeAid(p.get('id_Av')) ?? avFromId(p.get('id'));
   const bvid = p.get('bvid') && /BV[0-9A-Za-z]{10}/.test(p.get('bvid')!) ? p.get('bvid')! : undefined;
   const goto = p.get('goto') ?? '';
   const mid =
     extractMid(p.get('mid')) ?? extractMid(p.get('upId')) ?? (goto === 'up' ? extractMid(p.get('id')) : null);
+  const hasVideoId = aid !== null || bvid !== undefined;
 
-  if (goto === 'up' || p.has('upId') || (mid && !aid && !bvid)) {
+  if (goto === 'up' || (mid && !hasVideoId)) {
     return mid ? { kind: 'upper', mid } : null;
   }
-  if (aid || bvid) return { kind: 'video', aid: aid ?? undefined, bvid, mid: mid ?? undefined };
+  if (hasVideoId) return { kind: 'video', aid: aid ?? undefined, bvid, mid: mid ?? undefined };
   return null;
 }
