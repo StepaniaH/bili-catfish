@@ -197,4 +197,33 @@ describe('reconcileCards', () => {
     expect(deps.removeOverlay).toHaveBeenCalledWith(el);
     expect(deps.applyOverlay).not.toHaveBeenCalled();
   });
+
+  it('masks promo card only when blockPromos is on', async () => {
+    const el = document.createElement('div');
+    el.innerHTML = '<i class="vui_icon bili-video-card__stats--icon"></i>';
+    state = emptyState();
+    state.blockPromos = true;
+    const onDeps = makeDeps();
+    await reconcileCards([{ el, bvid: 'BVA', aid: null }], onDeps);
+    expect(onDeps.applyOverlay).toHaveBeenCalled();
+
+    state = emptyState();
+    el.classList.add('bcf-card');
+    el.appendChild(Object.assign(document.createElement('div'), { className: 'bcf-mask' }));
+    const offDeps = makeDeps();
+    await reconcileCards([{ el, bvid: 'BVA', aid: null }], offDeps);
+    expect(offDeps.removeOverlay).toHaveBeenCalled();
+  });
+
+  it('masks identity-less course card via courseHit without lookup', async () => {
+    const el = document.createElement('div');
+    el.innerHTML = '<span>课堂</span>';
+    state = emptyState();
+    state.blockCourses = true;
+    const deps = makeDeps();
+    await reconcileCards([{ el, bvid: null, aid: null }], deps);
+    expect(deps.applyOverlay).toHaveBeenCalled();
+    expect(deps.lookupInfo).not.toHaveBeenCalled();
+    expect(vi.mocked(deps.applyOverlay).mock.calls[0]![1].courseHit).toBe(true);
+  });
 });

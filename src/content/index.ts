@@ -1,5 +1,5 @@
 import { extractDislike } from '../core/endpoints';
-import { isAdCard } from './ad-detect';
+import { isAdCard, isCourseCard, isPromoCard } from './ad-detect';
 import { matchCard, type CardIdentity } from '../core/match';
 import type { BlockState } from '../shared/types';
 import { addUperRule, addVideoRule, createChromeStorage, loadState, onStateChange, removeUperRule, removeVideoRule } from '../shared/store';
@@ -30,18 +30,22 @@ export async function reconcileCards(cards: CardRef[], deps: ReconcileDeps): Pro
   }
   const masked = new Set<Element>();
   const adHitOf = (el: Element): boolean => state.blockAds && isAdCard(el);
+  const promoHitOf = (el: Element): boolean => state.blockPromos && isPromoCard(el);
+  const courseHitOf = (el: Element): boolean => state.blockCourses && isCourseCard(el);
 
   // 阶段 1：无网络 —— 视频规则（DOM id 直接匹配）+ 广告
   for (const c of cards) {
     const hit = matchCard(state, { aid: c.aid, bvid: c.bvid, mid: null });
     const adHit = adHitOf(c.el);
-    if (hit.video || adHit) {
+    const promoHit = promoHitOf(c.el);
+    const courseHit = courseHitOf(c.el);
+    if (hit.video || adHit || promoHit || courseHit) {
       deps.applyOverlay(c.el, {
         videoHit: hit.video !== null,
         uperHit: false,
         adHit,
-        promoHit: false,
-        courseHit: false,
+        promoHit,
+        courseHit,
         onUnblockVideo: () => void unblockVideo(null, { aid: c.aid, bvid: c.bvid, mid: null }),
         onUnblockUper: () => {},
       });
@@ -61,13 +65,15 @@ export async function reconcileCards(cards: CardRef[], deps: ReconcileDeps): Pro
       };
       const hit = matchCard(state, identity);
       const adHit = adHitOf(c.el);
-      if (hit.video || hit.uper || adHit) {
+      const promoHit = promoHitOf(c.el);
+      const courseHit = courseHitOf(c.el);
+      if (hit.video || hit.uper || adHit || promoHit || courseHit) {
         deps.applyOverlay(c.el, {
           videoHit: hit.video !== null,
           uperHit: hit.uper !== null,
           adHit,
-          promoHit: false,
-          courseHit: false,
+          promoHit,
+          courseHit,
           onUnblockVideo: () => void unblockVideo(info, identity),
           onUnblockUper: () => void unblockUper(identity, info),
         });
