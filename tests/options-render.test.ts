@@ -1,4 +1,6 @@
 // @vitest-environment jsdom
+import { readFileSync } from 'node:fs';
+import { resolve } from 'node:path';
 import { describe, it, expect, vi } from 'vitest';
 import { renderList, formatImportSummary } from '../src/options/options';
 import type { ImportSummary } from '../src/shared/sync';
@@ -35,5 +37,18 @@ describe('formatImportSummary', () => {
     expect(formatImportSummary(s)).toContain('新增屏蔽 UP 主 1 条');
     expect(formatImportSummary(s)).toContain('重复 3 条');
     expect(formatImportSummary(s)).toContain('无效 1 条');
+  });
+});
+
+describe('settings toggles html', () => {
+  it('options and popup expose course/promo toggles', () => {
+    const optionsHtml = readFileSync(resolve(process.cwd(), 'src/options/options.html'), 'utf8');
+    expect(optionsHtml).toContain('id="bcf-block-courses"');
+    expect(optionsHtml).toContain('屏蔽课堂');
+    expect(optionsHtml).toContain('id="bcf-block-promos"');
+    expect(optionsHtml).toContain('屏蔽推广');
+    const popupHtml = readFileSync(resolve(process.cwd(), 'src/popup/popup.html'), 'utf8');
+    expect(popupHtml).toContain('id="bcf-block-courses"');
+    expect(popupHtml).toContain('id="bcf-block-promos"');
   });
 });

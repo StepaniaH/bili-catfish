@@ -1,5 +1,6 @@
 import {
-  clearAll, createChromeStorage, loadState, removeUperRule, removeVideoRule, saveState, setBlockAds, setPaused,
+  clearAll, createChromeStorage, loadState, removeUperRule, removeVideoRule, saveState, setBlockAds, setBlockCourses,
+  setBlockPromos, setPaused,
 } from '../shared/store';
 import { buildExport, mergeImport, parseImport, type ImportSummary } from '../shared/sync';
 import type { BlockState } from '../shared/types';
@@ -98,6 +99,8 @@ async function refresh(): Promise<void> {
   const pausedEl = el<HTMLInputElement>('bcf-paused');
   pausedEl.checked = state.paused;
   el<HTMLInputElement>('bcf-block-ads').checked = state.blockAds;
+  el<HTMLInputElement>('bcf-block-courses').checked = state.blockCourses;
+  el<HTMLInputElement>('bcf-block-promos').checked = state.blockPromos;
   el<HTMLSpanElement>('bcf-status').textContent = state.paused ? '已暂停' : '已启用';
 }
 
@@ -145,6 +148,16 @@ export function main(): void {
 
   el<HTMLInputElement>('bcf-block-ads').addEventListener('change', async (e) => {
     await setBlockAds(storage, (e.target as HTMLInputElement).checked);
+    await refresh();
+  });
+
+  el<HTMLInputElement>('bcf-block-courses').addEventListener('change', async (e) => {
+    await setBlockCourses(storage, (e.target as HTMLInputElement).checked);
+    await refresh();
+  });
+
+  el<HTMLInputElement>('bcf-block-promos').addEventListener('change', async (e) => {
+    await setBlockPromos(storage, (e.target as HTMLInputElement).checked);
     await refresh();
   });
 
