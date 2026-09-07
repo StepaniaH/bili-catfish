@@ -37,6 +37,31 @@ describe('createLookup', () => {
     expect(r1.get('bvid:BVX')).toBeNull();
     expect(r2.get('bvid:BVX')).toBeNull();
   });
+
+  it('full cache hit resolves without the batch timer', async () => {
+    vi.useFakeTimers();
+    try {
+      const send = vi.fn(async (msg: { keys: Array<{ bvid?: string }> }): Promise<LookupResponse> => ({
+        [cacheKey(msg.keys[0]!)]: { aid: '1', bvid: 'BVA', title: 'T', mid: '2', upName: 'U' },
+      }));
+      const lookup = createLookup(send);
+      const first = lookup.lookup([{ bvid: 'BVA' }]);
+      await vi.advanceTimersByTimeAsync(60);
+      await first;
+      expect(send).toHaveBeenCalledTimes(1);
+
+      const second = lookup.lookup([{ bvid: 'BVA' }]);
+      const winner = await Promise.race([
+        second.then(() => 'resolved' as const),
+        vi.advanceTimersByTimeAsync(10).then(() => 'timer' as const),
+      ]);
+      expect(winner).toBe('resolved');
+      expect(send).toHaveBeenCalledTimes(1);
+      expect((await second).get('bvid:BVA')?.mid).toBe('2');
+    } finally {
+      vi.useRealTimers();
+    }
+  });
 });
 
 describe('session cache hydration', () => {

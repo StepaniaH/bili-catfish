@@ -76,6 +76,11 @@ export function createLookup(
     async lookup(keys) {
       await hydrate(keys);
       const pending = keys.filter((k) => !cache.has(cacheKey(k)));
+      if (pending.length === 0) {
+        const hit = new Map<string, LookupInfo | null>();
+        for (const k of keys) hit.set(cacheKey(k), cache.get(cacheKey(k)) ?? null);
+        return hit;
+      }
       await schedule(pending);
       const out = new Map<string, LookupInfo | null>();
       for (const k of keys) out.set(cacheKey(k), cache.get(cacheKey(k)) ?? null);

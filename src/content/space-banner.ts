@@ -1,5 +1,10 @@
 export const BANNER_ID = 'bcf-space-banner';
 
+export function shouldRenderBanner(currentMid: string | null, renderedMid: string | null, bannerInDom: boolean): boolean {
+  if (!currentMid) return false;
+  return !bannerInDom || renderedMid !== currentMid;
+}
+
 export function renderSpaceBanner(container: HTMLElement, onUnblock: () => void): void {
   if (document.getElementById(BANNER_ID)) return;
   const banner = document.createElement('div');

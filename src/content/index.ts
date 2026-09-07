@@ -7,7 +7,7 @@ import { installCaptureForwarding } from './capture-forward';
 import { createLookup, cacheKey, type LookupInfo, type CachedLookup } from './lookup';
 import { pageKind, scanCards, extractSpaceMid, type CardRef } from './scan';
 import { applyOverlay, isOverlayed, removeOverlay } from './overlay';
-import { renderSpaceBanner, removeSpaceBanner } from './space-banner';
+import { renderSpaceBanner, removeSpaceBanner, shouldRenderBanner, BANNER_ID } from './space-banner';
 
 export interface ReconcileDeps {
   getState: () => Promise<BlockState>;
@@ -245,17 +245,33 @@ async function unblockUperByMid(mid: string): Promise<void> {
   if (removed) showToast('已取消屏蔽该 UP 主');
 }
 
+let spaceTimer: ReturnType<typeof setInterval> | null = null;
+
 function installSpace(): void {
+  let renderedMid: string | null = null;
   const refreshBanner = async (): Promise<void> => {
     const mid = extractSpaceMid();
     const state = await loadState(storage);
     if (mid && state.upers[mid] && !state.paused) {
+      const bannerInDom = document.getElementById(BANNER_ID) !== null;
+      if (!shouldRenderBanner(mid, renderedMid, bannerInDom)) return;
+      removeSpaceBanner();
       const host = document.querySelector('#app .main-content, #app, body') ?? document.body;
       renderSpaceBanner(host as HTMLElement, () => void unblockUperByMid(mid));
+      renderedMid = mid;
     } else {
       removeSpaceBanner();
+      renderedMid = null;
     }
   };
+  if (spaceTimer) clearInterval(spaceTimer);
+  spaceTimer = setInterval(() => {
+    if (extractSpaceMid() !== renderedMid) {
+      void refreshBanner();
+    } else if (renderedMid && !document.getElementById(BANNER_ID)) {
+      void refreshBanner();
+    }
+  }, 1000);
   onStateChange(storage, () => void refreshBanner());
   void refreshBanner();
 }
