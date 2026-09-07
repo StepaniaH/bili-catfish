@@ -1,1 +1,151 @@
-export {};
+import {
+  clearAll, createChromeStorage, loadState, removeUperRule, removeVideoRule, saveState, setPaused,
+} from '../shared/store';
+import { buildExport, mergeImport, parseImport, type ImportSummary } from '../shared/sync';
+import type { BlockState } from '../shared/types';
+
+const storage = createChromeStorage();
+
+export interface ListItem {
+  id: string;
+  title: string;
+  sub: string;
+  extra: string;
+  blockedAt: number;
+}
+
+export function formatImportSummary(s: ImportSummary): string {
+  return `导入完成：新增屏蔽视频 ${s.videosAdded} 条，新增屏蔽 UP 主 ${s.upersAdded} 条，重复 ${s.duplicates} 条，无效 ${s.invalid} 条。`;
+}
+
+export function renderList(
+  container: HTMLElement,
+  items: ListItem[],
+  onRemove: (id: string) => void,
+): void {
+  container.textContent = '';
+  if (items.length === 0) {
+    const p = document.createElement('p');
+    p.className = 'bcf-empty';
+    p.textContent = '暂无记录';
+    container.appendChild(p);
+    return;
+  }
+  for (const item of items) {
+    const row = document.createElement('div');
+    row.className = 'bcf-row';
+    const info = document.createElement('div');
+    info.className = 'bcf-row-info';
+    const t = document.createElement('div');
+    t.className = 'bcf-row-title';
+    t.textContent = item.title || '（未知标题）';
+    const sub = document.createElement('div');
+    sub.className = 'bcf-row-sub';
+    const time = item.blockedAt ? new Date(item.blockedAt).toLocaleString('zh-CN') : '';
+    sub.textContent = [item.sub, item.extra, time].filter(Boolean).join(' · ');
+    info.append(t, sub);
+    const btn = document.createElement('button');
+    btn.textContent = '取消屏蔽';
+    btn.addEventListener('click', () => onRemove(item.id));
+    row.append(info, btn);
+    container.appendChild(row);
+  }
+}
+
+function el<T extends HTMLElement>(id: string): T {
+  const e = document.getElementById(id);
+  if (!e) throw new Error(`missing #${id}`);
+  return e as T;
+}
+
+function stateToLists(state: BlockState): { videos: ListItem[]; upers: ListItem[] } {
+  return {
+    videos: Object.values(state.videos)
+      .sort((a, b) => b.blockedAt - a.blockedAt)
+      .map((v) => ({
+        id: v.aid,
+        title: v.title ?? '',
+        sub: [v.aid, v.bvid].filter(Boolean).join(' / '),
+        extra: v.upName ? `UP：${v.upName}` : '',
+        blockedAt: v.blockedAt,
+      })),
+    upers: Object.values(state.upers)
+      .sort((a, b) => b.blockedAt - a.blockedAt)
+      .map((u) => ({
+        id: u.mid,
+        title: u.name ?? '',
+        sub: `UID：${u.mid}`,
+        extra: '',
+        blockedAt: u.blockedAt,
+      })),
+  };
+}
+
+async function refresh(): Promise<void> {
+  const state = await loadState(storage);
+  const { videos, upers } = stateToLists(state);
+  const videosEl = el<HTMLDivElement>('bcf-videos');
+  const upersEl = el<HTMLDivElement>('bcf-upers');
+  el<HTMLSpanElement>('bcf-count').textContent = `已屏蔽视频 ${videos.length} 个 · 已屏蔽 UP 主 ${upers.length} 位`;
+  renderList(videosEl, videos, async (id) => {
+    await removeVideoRule(storage, id);
+    await refresh();
+  });
+  renderList(upersEl, upers, async (mid) => {
+    await removeUperRule(storage, mid);
+    await refresh();
+  });
+  const pausedEl = el<HTMLInputElement>('bcf-paused');
+  pausedEl.checked = state.paused;
+  el<HTMLSpanElement>('bcf-status').textContent = state.paused ? '已暂停' : '已启用';
+}
+
+export function main(): void {
+  void refresh();
+
+  el<HTMLButtonElement>('bcf-export').addEventListener('click', async () => {
+    const state = await loadState(storage);
+    const data = JSON.stringify(buildExport(state), null, 2);
+    const blob = new Blob([data], { type: 'application/json' });
+    const a = document.createElement('a');
+    a.href = URL.createObjectURL(blob);
+    a.download = `bili-catfish-屏蔽列表-${new Date().toISOString().slice(0, 10)}.json`;
+    a.click();
+    URL.revokeObjectURL(a.href);
+  });
+
+  el<HTMLInputElement>('bcf-import-file').addEventListener('change', async (e) => {
+    const input = e.target as HTMLInputElement;
+    const file = input.files?.[0];
+    if (!file) return;
+    const text = await file.text();
+    const data = parseImport(text);
+    const resultEl = el<HTMLParagraphElement>('bcf-import-result');
+    if (!data) {
+      resultEl.textContent = '导入失败：文件不是有效的 Bili Catfish 屏蔽数据。';
+      input.value = '';
+      return;
+    }
+    const state = await loadState(storage);
+    const { state: merged, summary } = mergeImport(state, data);
+    // 用合并后的整体状态覆盖保存
+    await saveState(storage, merged);
+    resultEl.textContent = formatImportSummary(summary);
+    input.value = '';
+    await refresh();
+  });
+
+  el<HTMLButtonElement>('bcf-clear').addEventListener('click', async () => {
+    const ok = window.confirm('确定清空所有屏蔽记录吗？\n\n清空后，之前被屏蔽的视频和 UP 主可能重新出现在 Bilibili 中。');
+    if (!ok) return;
+    await clearAll(storage);
+    await refresh();
+  });
+
+  el<HTMLInputElement>('bcf-paused').addEventListener('change', async (e) => {
+    await setPaused(storage, (e.target as HTMLInputElement).checked);
+    await refresh();
+  });
+}
+
+if (typeof document !== 'undefined' && document.getElementById('bcf-videos')) main();

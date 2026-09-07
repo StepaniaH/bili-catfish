@@ -1,0 +1,4 @@
+body { width: 240px; font-family: system-ui, sans-serif; padding: 12px; }
+h1 { font-size: 16px; margin: 0 0 8px; }
+p, label { font-size: 13px; }
+button { margin-top: 8px; width: 100%; padding: 6px; cursor: pointer; }

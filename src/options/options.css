@@ -1,0 +1,15 @@
+body { font-family: system-ui, sans-serif; max-width: 760px; margin: 0 auto; padding: 16px; color: #18191c; }
+header { display: flex; align-items: baseline; gap: 12px; }
+h1 { font-size: 20px; }
+h2 { font-size: 16px; margin: 20px 0 8px; }
+#bcf-count { color: #61666d; font-size: 13px; }
+.bcf-status-row { display: flex; gap: 16px; align-items: center; padding: 8px 12px; background: #f1f2f3; border-radius: 6px; font-size: 14px; }
+.bcf-row { display: flex; align-items: center; justify-content: space-between; gap: 12px; padding: 8px 4px; border-bottom: 1px solid #e3e5e7; }
+.bcf-row-title { font-size: 14px; font-weight: 500; }
+.bcf-row-sub { font-size: 12px; color: #61666d; margin-top: 2px; }
+.bcf-row button, .bcf-actions button, .bcf-file-label { border: 1px solid #e3e5e7; background: #fff; border-radius: 4px; padding: 4px 12px; font-size: 13px; cursor: pointer; }
+.bcf-file-label { display: inline-block; }
+.bcf-file-label input { display: none; }
+.bcf-danger { border-color: #fb7299; color: #fb7299; }
+.bcf-empty { color: #9499a0; font-size: 13px; }
+#bcf-import-result { color: #219653; font-size: 13px; min-height: 18px; }

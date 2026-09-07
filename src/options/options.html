@@ -1,5 +1,39 @@
 <!doctype html>
 <html lang="zh-CN">
-<head><meta charset="utf-8" /><title>Bili Catfish - 管理屏蔽列表</title></head>
-<body><h1>Bili Catfish 管理页（建设中）</h1></body>
+<head>
+  <meta charset="utf-8" />
+  <title>Bili Catfish - 管理屏蔽列表</title>
+  <link rel="stylesheet" href="options.css" />
+</head>
+<body>
+  <header>
+    <h1>Bili Catfish · 管理屏蔽列表</h1>
+    <span id="bcf-count"></span>
+  </header>
+  <section class="bcf-status-row">
+    <label>
+      <input type="checkbox" id="bcf-paused" />
+      暂停插件（不新增屏蔽，也不遮挡内容，已有数据保留）
+    </label>
+    <span>当前状态：<strong id="bcf-status"></strong></span>
+  </section>
+  <main>
+    <section>
+      <h2>已屏蔽视频</h2>
+      <div id="bcf-videos"></div>
+    </section>
+    <section>
+      <h2>已屏蔽 UP 主</h2>
+      <div id="bcf-upers"></div>
+    </section>
+  </main>
+  <section class="bcf-actions">
+    <h2>数据</h2>
+    <button id="bcf-export">导出屏蔽列表</button>
+    <label class="bcf-file-label">导入屏蔽列表<input type="file" id="bcf-import-file" accept="application/json,.json" /></label>
+    <button id="bcf-clear" class="bcf-danger">清空所有屏蔽记录</button>
+    <p id="bcf-import-result"></p>
+  </section>
+  <script src="options.js"></script>
+</body>
 </html>
