@@ -1,6 +1,7 @@
 // @vitest-environment jsdom
-import { describe, it, expect, vi } from 'vitest';
-import { installCaptureHook } from '../src/content/capture';
+import { describe, it, expect, vi, afterEach } from 'vitest';
+import { installCaptureHook, CAPTURE_EVENT } from '../src/content/capture';
+import { installCaptureForwarding } from '../src/content/capture-forward';
 
 function fakeWindow() {
   const events: Array<{ type: string; detail?: unknown }> = [];
@@ -45,5 +46,35 @@ describe('installCaptureHook', () => {
     installCaptureHook(w);
     const res = await w.fetch('https://api.bilibili.com/x/web-interface/ranking/v2');
     expect(await res.text()).toBe('{}');
+  });
+});
+
+describe('installCaptureForwarding', () => {
+  const realFetch = window.fetch;
+
+  afterEach(() => {
+    window.fetch = realFetch;
+  });
+
+  it('adds and removes the capture listener without touching fetch', () => {
+    const onCapture = vi.fn();
+    const addSpy = vi.spyOn(window, 'addEventListener');
+    const removeSpy = vi.spyOn(window, 'removeEventListener');
+    const remove = installCaptureForwarding(onCapture);
+
+    expect(addSpy).toHaveBeenCalledWith('bcf:capture', expect.any(Function));
+    remove();
+    expect(removeSpy).toHaveBeenCalledWith('bcf:capture', expect.any(Function));
+    expect(window.fetch).toBe(realFetch);
+    expect(CAPTURE_EVENT).toBe('bcf:capture');
+  });
+
+  it('forwards matching capture events to the callback', () => {
+    const onCapture = vi.fn();
+    installCaptureForwarding(onCapture);
+    window.dispatchEvent(
+      new CustomEvent(CAPTURE_EVENT, { detail: { url: 'https://x', body: null } }),
+    );
+    expect(onCapture).toHaveBeenCalledWith('https://x', null);
   });
 });

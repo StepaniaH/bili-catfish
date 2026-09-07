@@ -1,4 +1,7 @@
-export const CAPTURE_EVENT = 'bcf:capture';
+import { CAPTURE_EVENT } from './capture-event';
+
+export { CAPTURE_EVENT };
+
 
 interface HookableWindow {
   fetch: typeof fetch;

@@ -1,4 +1,4 @@
-import { CAPTURE_EVENT } from './capture';
+import { CAPTURE_EVENT } from './capture-event';
 
 interface CaptureDetail {
   url: string;
