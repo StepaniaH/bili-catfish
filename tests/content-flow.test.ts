@@ -64,7 +64,7 @@ describe('reconcileCards', () => {
     });
     const n = await reconcileCards([{ el, bvid: 'BVA', aid: null }], deps);
     expect(n.masked).toBe(1);
-    expect(deps.applyOverlay).toHaveBeenCalledWith(el, expect.objectContaining({ uperHit: true, videoHit: false }));
+    expect(deps.applyOverlay).toHaveBeenCalledWith(el, expect.objectContaining({ uperHit: true, videoHit: false, adHit: false }));
   });
 
   it('removes overlay when rule gone', async () => {
@@ -89,7 +89,7 @@ describe('reconcileCards', () => {
     });
     const n = await reconcileCards([{ el, bvid: 'BVA', aid: null }], deps);
     expect(n.masked).toBe(1);
-    expect(deps.applyOverlay).toHaveBeenCalledWith(el, expect.objectContaining({ uperHit: true, videoHit: false }));
+    expect(deps.applyOverlay).toHaveBeenCalledWith(el, expect.objectContaining({ uperHit: true, videoHit: false, adHit: false }));
     expect(deps.removeOverlay).not.toHaveBeenCalled();
   });
 
@@ -105,7 +105,7 @@ describe('reconcileCards', () => {
     });
     const n = await reconcileCards([{ el, bvid: 'BVA', aid: null }], deps);
     expect(n.masked).toBe(1);
-    expect(deps.applyOverlay).toHaveBeenCalledWith(el, expect.objectContaining({ uperHit: true, videoHit: true }));
+    expect(deps.applyOverlay).toHaveBeenCalledWith(el, expect.objectContaining({ uperHit: true, videoHit: true, adHit: false }));
   });
 
   it('paused state removes all overlays and blocks new ones', async () => {

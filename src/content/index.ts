@@ -42,6 +42,7 @@ export async function reconcileCards(cards: CardRef[], deps: ReconcileDeps): Pro
       deps.applyOverlay(c.el, {
         videoHit: hit.video !== null,
         uperHit: hit.uper !== null,
+        adHit: false,
         onUnblockVideo: () => void unblockVideo(info, identity),
         onUnblockUper: () => void unblockUper(identity, info),
       });

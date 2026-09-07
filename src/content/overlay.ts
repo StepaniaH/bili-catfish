@@ -1,6 +1,7 @@
 export interface ApplyOptions {
   videoHit: boolean;
   uperHit: boolean;
+  adHit: boolean;
   onUnblockVideo: () => void;
   onUnblockUper: () => void;
 }
@@ -9,10 +10,12 @@ const MASK_CLASS = 'bcf-mask';
 const BAR_CLASS = 'bcf-bar';
 const CARD_CLASS = 'bcf-card';
 
-function labelFor(videoHit: boolean, uperHit: boolean): string {
-  if (videoHit && uperHit) return '已屏蔽该视频 · 已屏蔽该 UP 主';
-  if (videoHit) return '已屏蔽该视频';
-  return '已屏蔽该 UP 主';
+function labelFor(videoHit: boolean, uperHit: boolean, adHit: boolean): string {
+  const parts: string[] = [];
+  if (videoHit) parts.push('已屏蔽该视频');
+  if (uperHit) parts.push('已屏蔽该 UP 主');
+  if (adHit) parts.push('已屏蔽广告');
+  return parts.join(' · ');
 }
 
 function makeButton(text: string, onClick: () => void): HTMLButtonElement {
@@ -45,7 +48,7 @@ export function applyOverlay(card: Element, opts: ApplyOptions): void {
     bar.className = BAR_CLASS;
     card.appendChild(bar);
   }
-  const label = labelFor(opts.videoHit, opts.uperHit);
+  const label = labelFor(opts.videoHit, opts.uperHit, opts.adHit);
   if (mask.textContent !== label) mask.textContent = label;
   const buttons: Array<{ text: string; onClick: () => void }> = [];
   if (opts.videoHit) buttons.push({ text: '不再屏蔽该视频', onClick: opts.onUnblockVideo });
