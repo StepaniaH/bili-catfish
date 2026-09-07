@@ -1,4 +1,5 @@
-import type { LookupInfo, LookupRequest, LookupResponse } from '../content/lookup';
+import { LOOKUP_CACHE_KEY } from '../content/lookup';
+import type { CachedLookup, LookupInfo, LookupRequest, LookupResponse } from '../content/lookup';
 
 const VIEW_API = 'https://api.bilibili.com/x/web-interface/view';
 const FETCH_DELAY_MS = 150;
@@ -50,10 +51,35 @@ export async function handleLookup(
   return out;
 }
 
+export function mergeCacheEntries(
+  existing: Record<string, CachedLookup>,
+  res: LookupResponse,
+  now: number,
+): Record<string, CachedLookup> {
+  const merged: Record<string, CachedLookup> = { ...existing };
+  for (const [key, info] of Object.entries(res)) {
+    merged[key] = { info, at: now };
+  }
+  return merged;
+}
+
 if (typeof chrome !== 'undefined' && chrome.runtime?.onMessage) {
+  if (chrome.storage?.session?.setAccessLevel) {
+    chrome.storage.session.setAccessLevel({ accessLevel: 'TRUSTED_AND_UNTRUSTED_CONTEXTS' });
+  }
   chrome.runtime.onMessage.addListener((msg: LookupRequest, _sender, sendResponse) => {
     if (msg?.type !== 'bcf-lookup') return false;
-    void handleLookup(msg.keys ?? [], fetch).then(sendResponse);
+    void (async () => {
+      const res = await handleLookup(msg.keys ?? [], fetch);
+      try {
+        const o = await chrome.storage.session.get(LOOKUP_CACHE_KEY);
+        const existing = (o?.[LOOKUP_CACHE_KEY] as Record<string, CachedLookup> | undefined) ?? {};
+        await chrome.storage.session.set({ [LOOKUP_CACHE_KEY]: mergeCacheEntries(existing, res, Date.now()) });
+      } catch {
+        /* 写回失败不影响响应 */
+      }
+      sendResponse(res);
+    })();
     return true; // 异步响应
   });
 }

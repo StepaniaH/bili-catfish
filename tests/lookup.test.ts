@@ -1,5 +1,5 @@
 import { describe, it, expect, vi } from 'vitest';
-import { createLookup, cacheKey, type LookupResponse } from '../src/content/lookup';
+import { createLookup, cacheKey, type CachedLookup, type LookupResponse } from '../src/content/lookup';
 import { handleLookup } from '../src/background/index';
 
 describe('cacheKey', () => {
@@ -36,6 +36,37 @@ describe('createLookup', () => {
     expect(send).toHaveBeenCalledTimes(1);
     expect(r1.get('bvid:BVX')).toBeNull();
     expect(r2.get('bvid:BVX')).toBeNull();
+  });
+});
+
+describe('session cache hydration', () => {
+  it('hydrates from session cache without sending', async () => {
+    const store = new Map<string, CachedLookup>();
+    store.set('bvid:BVA', { info: { aid: '1', bvid: 'BVA', mid: '2', upName: 'U' }, at: Date.now() });
+    const send = vi.fn(async () => ({}) as LookupResponse);
+    const lookup = createLookup(send, async (key) => store.get(key));
+    const r = await lookup.lookup([{ bvid: 'BVA' }]);
+    expect(send).not.toHaveBeenCalled();
+    expect(r.get('bvid:BVA')?.mid).toBe('2');
+  });
+
+  it('expired positive entries fall through to send', async () => {
+    const store = new Map<string, CachedLookup>();
+    store.set('bvid:BVA', { info: { aid: '1', bvid: 'BVA' }, at: Date.now() - 25 * 3600 * 1000 });
+    const send = vi.fn(async (msg) => ({ [cacheKey(msg.keys[0])]: { aid: '9', bvid: 'BVA', mid: '8' } }) as LookupResponse);
+    const lookup = createLookup(send, async (key) => store.get(key));
+    const r = await lookup.lookup([{ bvid: 'BVA' }]);
+    expect(send).toHaveBeenCalledTimes(1);
+    expect(r.get('bvid:BVA')?.mid).toBe('8');
+  });
+
+  it('negative cache entries expire after 1h', async () => {
+    const store = new Map<string, CachedLookup>();
+    store.set('bvid:BVX', { info: null, at: Date.now() - 2 * 3600 * 1000 });
+    const send = vi.fn(async (msg) => ({ [cacheKey(msg.keys[0])]: null }) as LookupResponse);
+    const lookup = createLookup(send, async (key) => store.get(key));
+    await lookup.lookup([{ bvid: 'BVX' }]);
+    expect(send).toHaveBeenCalledTimes(1);
   });
 });
 

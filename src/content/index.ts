@@ -4,7 +4,7 @@ import { matchCard, type CardIdentity } from '../core/match';
 import type { BlockState } from '../shared/types';
 import { addUperRule, addVideoRule, createChromeStorage, loadState, onStateChange, removeUperRule, removeVideoRule } from '../shared/store';
 import { installCaptureForwarding } from './capture-forward';
-import { createLookup, cacheKey, type LookupInfo } from './lookup';
+import { createLookup, cacheKey, type LookupInfo, type CachedLookup } from './lookup';
 import { pageKind, scanCards, type CardRef } from './scan';
 import { applyOverlay, isOverlayed, removeOverlay } from './overlay';
 
@@ -85,7 +85,14 @@ export async function reconcileCards(cards: CardRef[], deps: ReconcileDeps): Pro
 /* ---------- 装配（生产入口） ---------- */
 
 const storage = createChromeStorage();
-const lookup = createLookup((msg) => chrome.runtime.sendMessage(msg));
+const sessionRead =
+  typeof chrome !== 'undefined' && chrome.storage?.session
+    ? async (key: string): Promise<CachedLookup | undefined> => {
+        const o = await chrome.storage.session.get(key);
+        return o?.[key] as CachedLookup | undefined;
+      }
+    : undefined;
+const lookup = createLookup((msg) => chrome.runtime.sendMessage(msg), sessionRead);
 let toastTimer: ReturnType<typeof setTimeout> | null = null;
 
 function showToast(text: string): void {
