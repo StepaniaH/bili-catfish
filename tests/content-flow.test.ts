@@ -148,6 +148,23 @@ describe('reconcileCards', () => {
     expect(n.masked).toBe(1);
   });
 
+  it('sends only id-bearing cards to lookup but still overlays identity-less ad cards', async () => {
+    state = emptyState();
+    state.blockAds = true;
+    state.upers['2'] = { mid: '2', blockedAt: 1 };
+    const adEl = document.createElement('div');
+    adEl.className = 'bili-video-card';
+    adEl.innerHTML = '<a href="//cm.bilibili.com/landing">落地页</a><span>广告</span>';
+    document.body.appendChild(adEl);
+    const idEl = makeCard('BVA');
+    const deps = makeDeps({ lookupInfo: vi.fn(async () => new Map()) });
+    const n = await reconcileCards([{ el: adEl, bvid: null, aid: null }, { el: idEl, bvid: 'BVA', aid: null }], deps);
+    expect(deps.lookupInfo).toHaveBeenCalledWith([{ bvid: 'BVA', aid: null }]);
+    expect(deps.applyOverlay).toHaveBeenCalledWith(adEl, expect.objectContaining({ adHit: true, videoHit: false, uperHit: false }));
+    expect(vi.mocked(deps.applyOverlay).mock.calls.filter((c) => c[0] === adEl).length).toBeGreaterThanOrEqual(2); // phase 1 + phase 2 maintenance
+    expect(n.masked).toBe(1);
+  });
+
   it('masks ad cards immediately when blockAds on (no lookup)', async () => {
     state = emptyState();
     state.blockAds = true;

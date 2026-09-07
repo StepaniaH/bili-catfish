@@ -23,8 +23,16 @@ describe('isAdCard', () => {
     expect(isAdCard(cardWith('<a href="//www.bilibili.com/video/BV1GJ411x7h7/">广告片拍摄教程</a>'))).toBe(false);
   });
 
-  it('ignores link-wrapped badge text', () => {
+  it('ignores badge inside a /video/ title link', () => {
     expect(isAdCard(cardWith('<a href="//www.bilibili.com/video/BV1GJ411x7h7/"><span>广告</span></a>'))).toBe(false);
+  });
+
+  it('detects badge inside a non-video (ad landing) link', () => {
+    expect(isAdCard(cardWith('<a href="//cm.bilibili.com/landing"><span>广告</span></a>'))).toBe(true);
+  });
+
+  it('detects badge deep-nested in plain divs', () => {
+    expect(isAdCard(cardWith('<div><div><span>广告</span></div></div>'))).toBe(true);
   });
 
   it('requires exact badge text (no substring matches)', () => {

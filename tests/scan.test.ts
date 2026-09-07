@@ -27,6 +27,22 @@ describe('scanCards', () => {
     expect(refs).toHaveLength(1);
     expect(refs[0].el.className).toContain('video-page-card');
   });
+
+  it('discovers ad card by badge when it has no video anchor (identity-less)', () => {
+    const refs = scanCards(doc('home-ad-badge.html'));
+    const ad = refs.find((r) => r.bvid === null && r.aid === null);
+    expect(ad).toBeDefined();
+    expect(ad!.el.className).toContain('bili-video-card');
+    expect(ad!.el.querySelector('h3')!.textContent).toBe('豆包广告');
+  });
+
+  it('does not discover video-anchor card via badge pass (title link excluded)', () => {
+    const refs = scanCards(doc('home-ad-badge.html'));
+    expect(refs).toHaveLength(2);
+    const normal = refs.find((r) => r.bvid === 'BV1GJ411x7h7');
+    expect(normal).toBeDefined();
+    expect(refs.filter((r) => r.el === normal!.el)).toHaveLength(1);
+  });
 });
 
 describe('pageKind', () => {

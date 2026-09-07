@@ -49,7 +49,7 @@ export async function reconcileCards(cards: CardRef[], deps: ReconcileDeps): Pro
 
   // 阶段 2：仅当存在 UP 主规则时才查询
   if (Object.keys(state.upers).length > 0) {
-    const infos = await deps.lookupInfo(cards.map((c) => ({ bvid: c.bvid, aid: c.aid })));
+    const infos = await deps.lookupInfo(cards.filter((c) => c.bvid || c.aid).map((c) => ({ bvid: c.bvid, aid: c.aid })));
     for (const c of cards) {
       const info = infos.get(cacheKey({ bvid: c.bvid, aid: c.aid }));
       const identity: CardIdentity = {
@@ -188,9 +188,19 @@ function installDomFallback(): void {
   );
 }
 
+export function isExtensionContextValid(): boolean {
+  return typeof chrome !== 'undefined' && !!chrome.runtime?.id;
+}
+
 function installRescan(): void {
   let scanning = false;
   let pending = false;
+  let offState: (() => void) | null = null;
+  function stop(): void {
+    mo.disconnect();
+    window.removeEventListener('scroll', debounced);
+    offState?.();
+  }
   async function scan(): Promise<void> {
     if (scanning) {
       pending = true;
@@ -199,6 +209,11 @@ function installRescan(): void {
     if (pageKind() === 'other') return;
     scanning = true;
     try {
+      if (!isExtensionContextValid()) {
+        stop();
+        pending = false;
+        return;
+      }
       const cards = scanCards(document.body);
       await reconcileCards(cards, {
         getState: () => loadState(storage),
@@ -206,6 +221,13 @@ function installRescan(): void {
         applyOverlay,
         removeOverlay,
       });
+    } catch (err) {
+      if (!isExtensionContextValid()) {
+        stop();
+        pending = false;
+        return;
+      }
+      console.warn('Bili Catfish scan failed', err);
     } finally {
       scanning = false;
       if (pending) {
@@ -223,7 +245,7 @@ function installRescan(): void {
   })();
   const mo = new MutationObserver(debounced);
   mo.observe(document.body, { childList: true, subtree: true });
-  onStateChange(storage, () => debounced());
+  offState = onStateChange(storage, () => debounced());
   window.addEventListener('scroll', debounced, { passive: true });
   void scan();
 }
@@ -235,7 +257,9 @@ function main(): void {
     installSpace();
     return;
   }
-  installCaptureForwarding((url, body) => void recordCapture(url, body));
+  installCaptureForwarding((url, body) => {
+    recordCapture(url, body).catch(() => {});
+  });
   installDomFallback();
   installRescan();
 }
@@ -250,18 +274,23 @@ let spaceTimer: ReturnType<typeof setInterval> | null = null;
 function installSpace(): void {
   let renderedMid: string | null = null;
   const refreshBanner = async (): Promise<void> => {
-    const mid = extractSpaceMid();
-    const state = await loadState(storage);
-    if (mid && state.upers[mid] && !state.paused) {
-      const bannerInDom = document.getElementById(BANNER_ID) !== null;
-      if (!shouldRenderBanner(mid, renderedMid, bannerInDom)) return;
-      removeSpaceBanner();
-      const host = document.querySelector('#app .main-content, #app, body') ?? document.body;
-      renderSpaceBanner(host as HTMLElement, () => void unblockUperByMid(mid));
-      renderedMid = mid;
-    } else {
-      removeSpaceBanner();
-      renderedMid = null;
+    try {
+      const mid = extractSpaceMid();
+      const state = await loadState(storage);
+      if (mid && state.upers[mid] && !state.paused) {
+        const bannerInDom = document.getElementById(BANNER_ID) !== null;
+        if (!shouldRenderBanner(mid, renderedMid, bannerInDom)) return;
+        removeSpaceBanner();
+        const host = document.querySelector('#app .main-content, #app, body') ?? document.body;
+        renderSpaceBanner(host as HTMLElement, () => void unblockUperByMid(mid));
+        renderedMid = mid;
+      } else {
+        removeSpaceBanner();
+        renderedMid = null;
+      }
+    } catch (err) {
+      if (!isExtensionContextValid()) return;
+      console.warn('Bili Catfish banner refresh failed', err);
     }
   };
   if (spaceTimer) clearInterval(spaceTimer);
