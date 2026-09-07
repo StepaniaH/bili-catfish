@@ -43,6 +43,21 @@ describe('scanCards', () => {
     expect(normal).toBeDefined();
     expect(refs.filter((r) => r.el === normal!.el)).toHaveLength(1);
   });
+
+  it('discovers course card by badge when it has no video anchor', () => {
+    const refs = scanCards(doc('home-course-badge.html'));
+    expect(refs).toHaveLength(1);
+    expect(refs[0]!.bvid).toBeNull();
+    expect(refs[0]!.aid).toBeNull();
+  });
+
+  it('does not discover video-anchor card via course badge pass', () => {
+    const root = document.createElement('div');
+    root.innerHTML = '<div class="bili-video-card"><a href="/video/BV1course123"><span>课堂</span></a></div>';
+    const refs = scanCards(root);
+    expect(refs).toHaveLength(1);
+    expect(refs[0]!.bvid).toBe('BV1course123');
+  });
 });
 
 describe('pageKind', () => {
