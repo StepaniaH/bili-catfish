@@ -14,7 +14,7 @@ function makeCard(bvid: string): HTMLElement {
 function makeDeps(over: Partial<ReconcileDeps> = {}): ReconcileDeps {
   return {
     getState: async () => state,
-    lookupInfo: async () => new Map(),
+    lookupInfo: vi.fn(async () => new Map()),
     applyOverlay: vi.fn(),
     removeOverlay: vi.fn(),
     ...over,
@@ -127,6 +127,50 @@ describe('reconcileCards', () => {
     const el = makeCard('BVUNKNOWN');
     const deps = makeDeps();
     await reconcileCards([{ el, bvid: 'BVUNKNOWN', aid: null }], deps);
+    expect(deps.applyOverlay).not.toHaveBeenCalled();
+  });
+
+  it('masks video-rule hits without any lookup (phase 1, no network)', async () => {
+    state = emptyState();
+    state.videos['1'] = { aid: '1', bvid: 'BVA', blockedAt: 1 };
+    const el = makeCard('BVA');
+    const deps = makeDeps();
+    const n = await reconcileCards([{ el, bvid: 'BVA', aid: null }], deps);
+    expect(deps.lookupInfo).not.toHaveBeenCalled(); // 无 UP 主规则 → 不查
+    expect(deps.applyOverlay).toHaveBeenCalledWith(el, expect.objectContaining({ videoHit: true, uperHit: false, adHit: false }));
+    expect(n.masked).toBe(1);
+  });
+
+  it('masks ad cards immediately when blockAds on (no lookup)', async () => {
+    state = emptyState();
+    state.blockAds = true;
+    const el = makeCard('BVA');
+    el.insertAdjacentHTML('beforeend', '<span>广告</span>');
+    const deps = makeDeps();
+    const n = await reconcileCards([{ el, bvid: 'BVA', aid: null }], deps);
+    expect(deps.lookupInfo).not.toHaveBeenCalled();
+    expect(deps.applyOverlay).toHaveBeenCalledWith(el, expect.objectContaining({ adHit: true, videoHit: false, uperHit: false }));
+    expect(n.masked).toBe(1);
+  });
+
+  it('does not mask ads when blockAds off', async () => {
+    state = emptyState();
+    const el = makeCard('BVA');
+    el.insertAdjacentHTML('beforeend', '<span>广告</span>');
+    const deps = makeDeps();
+    await reconcileCards([{ el, bvid: 'BVA', aid: null }], deps);
+    expect(deps.applyOverlay).not.toHaveBeenCalled();
+  });
+
+  it('paused removes overlays even for ads', async () => {
+    state = emptyState();
+    state.paused = true;
+    state.blockAds = true;
+    const el = makeCard('BVA');
+    el.insertAdjacentHTML('beforeend', '<span>广告</span>');
+    const deps = makeDeps();
+    await reconcileCards([{ el, bvid: 'BVA', aid: null }], deps);
+    expect(deps.removeOverlay).toHaveBeenCalledWith(el);
     expect(deps.applyOverlay).not.toHaveBeenCalled();
   });
 });

@@ -1,4 +1,5 @@
 import { extractDislike } from '../core/endpoints';
+import { isAdCard } from './ad-detect';
 import { matchCard, type CardIdentity } from '../core/match';
 import type { BlockState } from '../shared/types';
 import { addUperRule, addVideoRule, createChromeStorage, loadState, onStateChange, removeUperRule, removeVideoRule } from '../shared/store';
@@ -23,34 +24,61 @@ export async function reconcileCards(cards: CardRef[], deps: ReconcileDeps): Pro
   const state = await deps.getState();
   const stats: ReconcileStats = { scanned: cards.length, masked: 0 };
   if (state.paused) {
-    for (const c of cards) {
-      deps.removeOverlay(c.el);
-    }
+    for (const c of cards) deps.removeOverlay(c.el);
     return stats;
   }
-  const keys = cards.map((c) => ({ bvid: c.bvid, aid: c.aid }));
-  const infos = await deps.lookupInfo(keys);
+  const masked = new Set<Element>();
+  const adHitOf = (el: Element): boolean => state.blockAds && isAdCard(el);
+
+  // 阶段 1：无网络 —— 视频规则（DOM id 直接匹配）+ 广告
   for (const c of cards) {
-    const info = infos.get(cacheKey({ bvid: c.bvid, aid: c.aid }));
-    const identity: CardIdentity = {
-      aid: info?.aid ?? c.aid,
-      bvid: info?.bvid ?? c.bvid,
-      mid: info?.mid ?? null,
-    };
-    const hit = matchCard(state, identity);
-    if (hit.video || hit.uper) {
+    const hit = matchCard(state, { aid: c.aid, bvid: c.bvid, mid: null });
+    const adHit = adHitOf(c.el);
+    if (hit.video || adHit) {
       deps.applyOverlay(c.el, {
         videoHit: hit.video !== null,
-        uperHit: hit.uper !== null,
-        adHit: false,
-        onUnblockVideo: () => void unblockVideo(info, identity),
-        onUnblockUper: () => void unblockUper(identity, info),
+        uperHit: false,
+        adHit,
+        onUnblockVideo: () => void unblockVideo(null, { aid: c.aid, bvid: c.bvid, mid: null }),
+        onUnblockUper: () => {},
       });
-      stats.masked += 1;
-    } else if (isOverlayed(c.el)) {
-      deps.removeOverlay(c.el);
+      masked.add(c.el);
     }
   }
+
+  // 阶段 2：仅当存在 UP 主规则时才查询
+  if (Object.keys(state.upers).length > 0) {
+    const infos = await deps.lookupInfo(cards.map((c) => ({ bvid: c.bvid, aid: c.aid })));
+    for (const c of cards) {
+      const info = infos.get(cacheKey({ bvid: c.bvid, aid: c.aid }));
+      const identity: CardIdentity = {
+        aid: info?.aid ?? c.aid,
+        bvid: info?.bvid ?? c.bvid,
+        mid: info?.mid ?? null,
+      };
+      const hit = matchCard(state, identity);
+      const adHit = adHitOf(c.el);
+      if (hit.video || hit.uper || adHit) {
+        deps.applyOverlay(c.el, {
+          videoHit: hit.video !== null,
+          uperHit: hit.uper !== null,
+          adHit,
+          onUnblockVideo: () => void unblockVideo(info, identity),
+          onUnblockUper: () => void unblockUper(identity, info),
+        });
+        masked.add(c.el);
+      } else if (isOverlayed(c.el)) {
+        deps.removeOverlay(c.el);
+      }
+    }
+  } else {
+    // 无 UP 主规则：清理已不再命中的旧遮挡
+    for (const c of cards) {
+      if (masked.has(c.el)) continue;
+      if (isOverlayed(c.el)) deps.removeOverlay(c.el);
+    }
+  }
+  stats.masked = masked.size;
   return stats;
 }
 
@@ -181,7 +209,7 @@ function installRescan(): void {
     let t: ReturnType<typeof setTimeout> | null = null;
     return () => {
       if (t) clearTimeout(t);
-      t = setTimeout(() => void scan(), 300);
+      t = setTimeout(() => void scan(), 100);
     };
   })();
   const mo = new MutationObserver(debounced);

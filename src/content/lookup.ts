@@ -17,7 +17,7 @@ export function cacheKey(k: { bvid?: string | null; aid?: string | null }): stri
   return k.bvid ? `bvid:${k.bvid}` : `aid:${k.aid}`;
 }
 
-const BATCH_DELAY_MS = 100;
+const BATCH_DELAY_MS = 50;
 
 export function createLookup(
   send: (msg: LookupRequest) => Promise<LookupResponse>,
