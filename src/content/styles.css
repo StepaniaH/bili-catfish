@@ -1,0 +1,81 @@
+.bcf-card {
+  position: relative !important;
+}
+
+.bcf-mask {
+  position: absolute;
+  inset: 0;
+  z-index: 9999;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: rgba(255, 255, 255, 0.12);
+  backdrop-filter: blur(14px);
+  -webkit-backdrop-filter: blur(14px);
+  border-radius: 6px;
+  color: #fff;
+  font-size: 13px;
+  pointer-events: none;
+  opacity: 1;
+  transition: opacity 0.15s ease;
+}
+
+.bcf-mask::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.2);
+  z-index: -1;
+}
+
+.bcf-mask span,
+.bcf-mask {
+  text-shadow: 0 1px 2px rgba(0, 0, 0, 0.6);
+}
+
+.bcf-card:hover .bcf-mask {
+  opacity: 0;
+}
+
+.bcf-bar {
+  position: absolute;
+  top: 6px;
+  right: 6px;
+  z-index: 10000;
+  display: flex;
+  gap: 4px;
+  opacity: 0.25;
+  transition: opacity 0.15s ease;
+}
+
+.bcf-card:hover .bcf-bar,
+.bcf-bar:focus-within {
+  opacity: 1;
+}
+
+.bcf-bar button {
+  border: none;
+  border-radius: 4px;
+  padding: 4px 8px;
+  font-size: 12px;
+  cursor: pointer;
+  background: rgba(0, 0, 0, 0.65);
+  color: #fff;
+}
+
+.bcf-bar button:hover {
+  background: rgba(0, 0, 0, 0.85);
+}
+
+.bcf-toast {
+  position: fixed;
+  right: 20px;
+  bottom: 20px;
+  z-index: 2147483647;
+  background: rgba(0, 0, 0, 0.8);
+  color: #fff;
+  font-size: 13px;
+  padding: 8px 14px;
+  border-radius: 6px;
+  transition: opacity 0.2s ease;
+}
