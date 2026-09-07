@@ -19,8 +19,9 @@ export interface BlockState {
   videos: Record<string, VideoRule>;
   upers: Record<string, UperRule>;
   paused: boolean;
+  blockAds: boolean;
 }
 
 export function emptyState(): BlockState {
-  return { videos: {}, upers: {}, paused: false };
+  return { videos: {}, upers: {}, paused: false, blockAds: false };
 }

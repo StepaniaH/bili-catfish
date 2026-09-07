@@ -1,7 +1,7 @@
 import { describe, it, expect, vi } from 'vitest';
 import {
   createMemoryStorage, loadState, addVideoRule, addUperRule,
-  removeVideoRule, removeUperRule, setPaused, clearAll, onStateChange,
+  removeVideoRule, removeUperRule, setPaused, setBlockAds, clearAll, onStateChange,
 } from '../src/shared/store';
 import { emptyState } from '../src/shared/types';
 
@@ -117,6 +117,21 @@ it('loadState falls back to empty state on corrupt data', async () => {
   const s = mem();
   await s.set('bcf-state', { videos: 'not-an-object' });
   expect(await loadState(s)).toEqual(emptyState());
+});
+
+it('blockAds defaults to false and persists via setBlockAds', async () => {
+  const s = createMemoryStorage();
+  expect((await loadState(s)).blockAds).toBe(false);
+  await setBlockAds(s, true);
+  expect((await loadState(s)).blockAds).toBe(true);
+  await setBlockAds(s, false);
+  expect((await loadState(s)).blockAds).toBe(false);
+});
+
+it('loadState normalizes corrupt blockAds to false', async () => {
+  const s = createMemoryStorage();
+  await s.set('bcf-state', { videos: {}, upers: {}, blockAds: 'yes' });
+  expect((await loadState(s)).blockAds).toBe(false);
 });
 
 it('onStateChange fires on writes', async () => {

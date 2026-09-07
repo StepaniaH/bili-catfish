@@ -68,7 +68,7 @@ export async function loadState(s: KVStorage): Promise<BlockState> {
   for (const [k, v] of Object.entries(raw.upers)) {
     if (isRecord(v) && typeof v.mid === 'string') upers[k] = v as unknown as UperRule;
   }
-  return { videos, upers, paused: raw.paused === true };
+  return { videos, upers, paused: raw.paused === true, blockAds: raw.blockAds === true };
 }
 
 export async function saveState(s: KVStorage, state: BlockState): Promise<void> {
@@ -156,6 +156,14 @@ export async function setPaused(s: KVStorage, paused: boolean): Promise<void> {
   await serialize(async () => {
     const state = await loadState(s);
     state.paused = paused;
+    await saveState(s, state);
+  });
+}
+
+export async function setBlockAds(s: KVStorage, blockAds: boolean): Promise<void> {
+  await serialize(async () => {
+    const state = await loadState(s);
+    state.blockAds = blockAds;
     await saveState(s, state);
   });
 }

@@ -1,5 +1,5 @@
 import {
-  clearAll, createChromeStorage, loadState, removeUperRule, removeVideoRule, saveState, setPaused,
+  clearAll, createChromeStorage, loadState, removeUperRule, removeVideoRule, saveState, setBlockAds, setPaused,
 } from '../shared/store';
 import { buildExport, mergeImport, parseImport, type ImportSummary } from '../shared/sync';
 import type { BlockState } from '../shared/types';
@@ -97,6 +97,7 @@ async function refresh(): Promise<void> {
   });
   const pausedEl = el<HTMLInputElement>('bcf-paused');
   pausedEl.checked = state.paused;
+  el<HTMLInputElement>('bcf-block-ads').checked = state.blockAds;
   el<HTMLSpanElement>('bcf-status').textContent = state.paused ? '已暂停' : '已启用';
 }
 
@@ -139,6 +140,11 @@ export function main(): void {
     const ok = window.confirm('确定清空所有屏蔽记录吗？\n\n清空后，之前被屏蔽的视频和 UP 主可能重新出现在 Bilibili 中。');
     if (!ok) return;
     await clearAll(storage);
+    await refresh();
+  });
+
+  el<HTMLInputElement>('bcf-block-ads').addEventListener('change', async (e) => {
+    await setBlockAds(storage, (e.target as HTMLInputElement).checked);
     await refresh();
   });
 
