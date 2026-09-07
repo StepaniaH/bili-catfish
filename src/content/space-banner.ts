@@ -5,11 +5,12 @@ export function shouldRenderBanner(currentMid: string | null, renderedMid: strin
   return !bannerInDom || renderedMid !== currentMid;
 }
 
-export function renderSpaceBanner(container: HTMLElement, onUnblock: () => void): void {
+export function renderSpaceBanner(container: HTMLElement, onUnblock: () => void, topOffset: number = 64): void {
   if (document.getElementById(BANNER_ID)) return;
   const banner = document.createElement('div');
   banner.id = BANNER_ID;
   banner.className = 'bcf-space-banner';
+  banner.style.top = `${topOffset}px`;
   const text = document.createElement('span');
   text.textContent = 'Bili Catfish：该 UP 主已被屏蔽';
   const btn = document.createElement('button');

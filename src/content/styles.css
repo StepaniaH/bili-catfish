@@ -83,28 +83,31 @@
 
 .bcf-space-banner {
   position: fixed;
-  top: 12px;
-  left: 50%;
-  transform: translateX(-50%);
+  top: 64px;
+  left: 0;
+  right: 0;
   z-index: 2147483646;
   display: flex;
   align-items: center;
+  justify-content: center;
   gap: 10px;
-  background: rgba(0, 0, 0, 0.82);
-  color: #fff;
-  font-size: 13px;
-  padding: 8px 14px;
-  border-radius: 8px;
+  background: #ffb027;
+  color: #1f1f1f;
+  font-size: 14px;
+  font-weight: 700;
+  padding: 10px 16px;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.35);
 }
 
 .bcf-space-banner button {
-  border: none;
+  border: 1px solid rgba(0, 0, 0, 0.45);
   border-radius: 4px;
-  padding: 4px 8px;
+  padding: 4px 10px;
   font-size: 12px;
+  font-weight: 600;
   cursor: pointer;
-  background: rgba(255, 255, 255, 0.2);
-  color: #fff;
+  background: #fff;
+  color: #1f1f1f;
 }
 
 .bcf-space-banner button:hover {

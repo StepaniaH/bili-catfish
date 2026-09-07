@@ -27,6 +27,15 @@ describe('renderSpaceBanner', () => {
     expect(container.querySelectorAll('.bcf-space-banner')).toHaveLength(1);
   });
 
+  it('positions the banner below the measured nav offset', () => {
+    const container = document.createElement('div');
+    document.body.appendChild(container);
+    renderSpaceBanner(container, () => {}, 72);
+    const banner = document.getElementById('bcf-space-banner')!;
+    expect(banner.style.top).toBe('72px');
+    expect(banner.textContent).toContain('Bili Catfish：该 UP 主已被屏蔽');
+  });
+
   it('removeSpaceBanner removes it', () => {
     const container = document.createElement('div');
     document.body.appendChild(container);

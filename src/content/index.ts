@@ -274,6 +274,12 @@ function main(): void {
   installRescan();
 }
 
+function navBottomOffset(): number {
+  const header = document.querySelector<HTMLElement>('.bili-header, header');
+  const bottom = header?.getBoundingClientRect().bottom ?? 0;
+  return bottom > 0 && bottom < 200 ? Math.round(bottom) : 64;
+}
+
 async function unblockUperByMid(mid: string): Promise<void> {
   const removed = await removeUperRule(storage, mid);
   if (removed) showToast('已取消屏蔽该 UP 主');
@@ -292,7 +298,7 @@ function installSpace(): void {
         if (!shouldRenderBanner(mid, renderedMid, bannerInDom)) return;
         removeSpaceBanner();
         const host = document.querySelector('#app .main-content, #app, body') ?? document.body;
-        renderSpaceBanner(host as HTMLElement, () => void unblockUperByMid(mid));
+        renderSpaceBanner(host as HTMLElement, () => void unblockUperByMid(mid), navBottomOffset());
         renderedMid = mid;
       } else {
         removeSpaceBanner();
