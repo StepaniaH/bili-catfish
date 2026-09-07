@@ -275,7 +275,9 @@ function main(): void {
 }
 
 function navBottomOffset(): number {
-  const header = document.querySelector<HTMLElement>('.bili-header, header');
+  const header =
+    document.querySelector<HTMLElement>('.bili-header') ??
+    document.querySelector<HTMLElement>('header');
   const bottom = header?.getBoundingClientRect().bottom ?? 0;
   return bottom > 0 && bottom < 200 ? Math.round(bottom) : 64;
 }
