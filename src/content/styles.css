@@ -1,5 +1,6 @@
 .bcf-card {
   position: relative !important;
+  isolation: isolate;
 }
 
 .bcf-mask {
