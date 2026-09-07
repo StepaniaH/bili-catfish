@@ -2,6 +2,7 @@ import { describe, it, expect, vi } from 'vitest';
 import {
   createMemoryStorage, loadState, addVideoRule, addUperRule,
   removeVideoRule, removeUperRule, setPaused, setBlockAds, clearAll, onStateChange,
+  setBlockCourses, setBlockPromos,
 } from '../src/shared/store';
 import { emptyState } from '../src/shared/types';
 
@@ -141,4 +142,20 @@ it('onStateChange fires on writes', async () => {
   await addVideoRule(s, { aid: '1' });
   expect(cb).toHaveBeenCalled();
   off();
+});
+
+describe('blockCourses/blockPromos', () => {
+  it('defaults to false and round-trips both flags', async () => {
+    const s = createMemoryStorage();
+    const empty = await loadState(s);
+    expect(empty.blockCourses).toBe(false);
+    expect(empty.blockPromos).toBe(false);
+    await setBlockCourses(s, true);
+    await setBlockPromos(s, true);
+    const state = await loadState(s);
+    expect(state.blockCourses).toBe(true);
+    expect(state.blockPromos).toBe(true);
+    await setBlockCourses(s, false);
+    expect((await loadState(s)).blockCourses).toBe(false);
+  });
 });

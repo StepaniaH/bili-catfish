@@ -20,8 +20,10 @@ export interface BlockState {
   upers: Record<string, UperRule>;
   paused: boolean;
   blockAds: boolean;
+  blockCourses: boolean;
+  blockPromos: boolean;
 }
 
 export function emptyState(): BlockState {
-  return { videos: {}, upers: {}, paused: false, blockAds: false };
+  return { videos: {}, upers: {}, paused: false, blockAds: false, blockCourses: false, blockPromos: false };
 }
