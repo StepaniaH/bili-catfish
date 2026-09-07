@@ -109,7 +109,7 @@ async function recordCapture(url: string, body: string | null): Promise<void> {
 /* DOM 兜底捕获：点「不感兴趣/不喜欢」菜单项时，就近找卡片拿 bvid */
 export function matchMenuFallback(ownText: string, itemContainsVideoLink: boolean): 'video' | 'uper' | null {
   if (itemContainsVideoLink) return null;
-  const isUper = /UP主|up主/i.test(ownText);
+  const isUper = /UP\s*主|up\s*主/i.test(ownText);
   const isVideo = /不感兴趣|不想看/.test(ownText);
   const isDislike = /不喜欢/.test(ownText);
   if (!isVideo && !isDislike) return null;

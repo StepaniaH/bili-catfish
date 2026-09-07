@@ -32,6 +32,13 @@ describe('matchMenuFallback', () => {
     expect(matchMenuFallback('不喜欢该UP主', false)).toBe('uper');
   });
 
+  it('matches bilibili menu labels with spaces (不想看此 UP 主 / 内容不感兴趣)', () => {
+    expect(matchMenuFallback('不想看此 UP 主', false)).toBe('uper');
+    expect(matchMenuFallback('不喜欢此 UP 主', false)).toBe('uper');
+    expect(matchMenuFallback('内容不感兴趣', false)).toBe('video');
+    expect(matchMenuFallback('不想看此视频', false)).toBe('video');
+  });
+
   it('ignores long text such as card titles', () => {
     expect(matchMenuFallback('新人UP主教你做饭，不感兴趣速来看', false)).toBeNull();
   });

@@ -18,7 +18,7 @@ for (const [src, dest] of [
 const watch = process.argv.includes('--watch');
 const options = {
   bundle: true,
-  format: 'esm',
+  format: 'iife',
   target: 'chrome111',
   outdir: 'dist',
   entryPoints: {
