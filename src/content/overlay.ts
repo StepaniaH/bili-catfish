@@ -45,10 +45,19 @@ export function applyOverlay(card: Element, opts: ApplyOptions): void {
     bar.className = BAR_CLASS;
     card.appendChild(bar);
   }
-  mask.textContent = labelFor(opts.videoHit, opts.uperHit);
-  bar.textContent = '';
-  if (opts.videoHit) bar.appendChild(makeButton('不再屏蔽该视频', opts.onUnblockVideo));
-  if (opts.uperHit) bar.appendChild(makeButton('不再屏蔽该 UP 主', opts.onUnblockUper));
+  const label = labelFor(opts.videoHit, opts.uperHit);
+  if (mask.textContent !== label) mask.textContent = label;
+  const buttons: Array<{ text: string; onClick: () => void }> = [];
+  if (opts.videoHit) buttons.push({ text: '不再屏蔽该视频', onClick: opts.onUnblockVideo });
+  if (opts.uperHit) buttons.push({ text: '不再屏蔽该 UP 主', onClick: opts.onUnblockUper });
+  const current = Array.from(bar.children).filter((el): el is HTMLButtonElement => el instanceof HTMLButtonElement);
+  const sameSet =
+    current.length === buttons.length &&
+    buttons.every((b, i) => current[i]!.textContent === b.text);
+  if (!sameSet) {
+    bar.textContent = '';
+    for (const b of buttons) bar.appendChild(makeButton(b.text, b.onClick));
+  }
 }
 
 export function removeOverlay(card: Element): void {

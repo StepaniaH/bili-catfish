@@ -39,12 +39,14 @@ export async function reconcileCards(cards: CardRef[], deps: ReconcileDeps): Pro
     };
     const hit = matchCard(state, identity);
     if (hit.video || hit.uper) {
-      deps.applyOverlay(c.el, {
-        videoHit: hit.video !== null,
-        uperHit: hit.uper !== null,
-        onUnblockVideo: () => void unblockVideo(info, identity),
-        onUnblockUper: () => void unblockUper(identity, info),
-      });
+      if (!isOverlayed(c.el)) {
+        deps.applyOverlay(c.el, {
+          videoHit: hit.video !== null,
+          uperHit: hit.uper !== null,
+          onUnblockVideo: () => void unblockVideo(info, identity),
+          onUnblockUper: () => void unblockUper(identity, info),
+        });
+      }
       stats.masked += 1;
     } else if (isOverlayed(c.el)) {
       deps.removeOverlay(c.el);
@@ -144,8 +146,13 @@ function installDomFallback(): void {
 
 function installRescan(): void {
   let scanning = false;
+  let pending = false;
   async function scan(): Promise<void> {
-    if (scanning || pageKind() === 'other') return;
+    if (scanning) {
+      pending = true;
+      return;
+    }
+    if (pageKind() === 'other') return;
     scanning = true;
     try {
       const cards = scanCards(document.body);
@@ -157,6 +164,10 @@ function installRescan(): void {
       });
     } finally {
       scanning = false;
+      if (pending) {
+        pending = false;
+        void scan();
+      }
     }
   }
   const debounced = (() => {
