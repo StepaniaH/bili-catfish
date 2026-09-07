@@ -40,6 +40,8 @@ export async function reconcileCards(cards: CardRef[], deps: ReconcileDeps): Pro
         videoHit: hit.video !== null,
         uperHit: false,
         adHit,
+        promoHit: false,
+        courseHit: false,
         onUnblockVideo: () => void unblockVideo(null, { aid: c.aid, bvid: c.bvid, mid: null }),
         onUnblockUper: () => {},
       });
@@ -64,6 +66,8 @@ export async function reconcileCards(cards: CardRef[], deps: ReconcileDeps): Pro
           videoHit: hit.video !== null,
           uperHit: hit.uper !== null,
           adHit,
+          promoHit: false,
+          courseHit: false,
           onUnblockVideo: () => void unblockVideo(info, identity),
           onUnblockUper: () => void unblockUper(identity, info),
         });
