@@ -1,7 +1,7 @@
 // @vitest-environment jsdom
 import { describe, it, expect } from 'vitest';
 import { readFileSync } from 'node:fs';
-import { scanCards, pageKind } from '../src/content/scan';
+import { scanCards, pageKind, extractSpaceMid } from '../src/content/scan';
 
 function doc(name: string): Document {
   return new DOMParser().parseFromString(
@@ -35,5 +35,18 @@ describe('pageKind', () => {
     expect(pageKind('https://search.bilibili.com/all?keyword=x')).toBe('search');
     expect(pageKind('https://www.bilibili.com/video/BV1GJ411x7h7/')).toBe('related');
     expect(pageKind('https://www.bilibili.com/v/popular/all')).toBe('other');
+  });
+
+  it('classifies space pages', () => {
+    expect(pageKind('https://space.bilibili.com/12345')).toBe('space');
+    expect(pageKind('https://space.bilibili.com/12345/video')).toBe('space');
+    expect(pageKind('https://space.bilibili.com/')).toBe('space');
+  });
+
+  it('extracts mid from space url', () => {
+    expect(extractSpaceMid('https://space.bilibili.com/12345')).toBe('12345');
+    expect(extractSpaceMid('https://space.bilibili.com/12345/video?kw=x')).toBe('12345');
+    expect(extractSpaceMid('https://space.bilibili.com/')).toBeNull();
+    expect(extractSpaceMid('https://www.bilibili.com/')).toBeNull();
   });
 });

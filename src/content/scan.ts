@@ -35,14 +35,26 @@ export function scanCards(root: Document | Element): CardRef[] {
   return Array.from(byEl.values());
 }
 
-export function pageKind(href: string = location.href): 'home' | 'search' | 'related' | 'other' {
+export function pageKind(href: string = location.href): 'home' | 'search' | 'related' | 'space' | 'other' {
   try {
     const u = new URL(href);
     if (u.hostname === 'search.bilibili.com') return 'search';
+    if (u.hostname === 'space.bilibili.com') return 'space';
     if (u.hostname === 'www.bilibili.com' && /^\/video\//.test(u.pathname)) return 'related';
     if (u.hostname === 'www.bilibili.com' && (u.pathname === '/' || u.pathname === '/index.html')) return 'home';
   } catch {
     /* fallthrough */
   }
   return 'other';
+}
+
+export function extractSpaceMid(href: string = location.href): string | null {
+  try {
+    const u = new URL(href);
+    if (u.hostname !== 'space.bilibili.com') return null;
+    const m = /^\/(\d+)/.exec(u.pathname);
+    return m ? m[1]! : null;
+  } catch {
+    return null;
+  }
 }

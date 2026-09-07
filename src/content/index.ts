@@ -5,8 +5,9 @@ import type { BlockState } from '../shared/types';
 import { addUperRule, addVideoRule, createChromeStorage, loadState, onStateChange, removeUperRule, removeVideoRule } from '../shared/store';
 import { installCaptureForwarding } from './capture-forward';
 import { createLookup, cacheKey, type LookupInfo, type CachedLookup } from './lookup';
-import { pageKind, scanCards, type CardRef } from './scan';
+import { pageKind, scanCards, extractSpaceMid, type CardRef } from './scan';
 import { applyOverlay, isOverlayed, removeOverlay } from './overlay';
+import { renderSpaceBanner, removeSpaceBanner } from './space-banner';
 
 export interface ReconcileDeps {
   getState: () => Promise<BlockState>;
@@ -227,10 +228,35 @@ function installRescan(): void {
 }
 
 function main(): void {
-  if (pageKind() === 'other') return;
+  const kind = pageKind();
+  if (kind === 'other') return;
+  if (kind === 'space') {
+    installSpace();
+    return;
+  }
   installCaptureForwarding((url, body) => void recordCapture(url, body));
   installDomFallback();
   installRescan();
+}
+
+async function unblockUperByMid(mid: string): Promise<void> {
+  const removed = await removeUperRule(storage, mid);
+  if (removed) showToast('已取消屏蔽该 UP 主');
+}
+
+function installSpace(): void {
+  const refreshBanner = async (): Promise<void> => {
+    const mid = extractSpaceMid();
+    const state = await loadState(storage);
+    if (mid && state.upers[mid] && !state.paused) {
+      const host = document.querySelector('#app .main-content, #app, body') ?? document.body;
+      renderSpaceBanner(host as HTMLElement, () => void unblockUperByMid(mid));
+    } else {
+      removeSpaceBanner();
+    }
+  };
+  onStateChange(storage, () => void refreshBanner());
+  void refreshBanner();
 }
 
 export { main as startContentScript };
