@@ -39,14 +39,12 @@ export async function reconcileCards(cards: CardRef[], deps: ReconcileDeps): Pro
     };
     const hit = matchCard(state, identity);
     if (hit.video || hit.uper) {
-      if (!isOverlayed(c.el)) {
-        deps.applyOverlay(c.el, {
-          videoHit: hit.video !== null,
-          uperHit: hit.uper !== null,
-          onUnblockVideo: () => void unblockVideo(info, identity),
-          onUnblockUper: () => void unblockUper(identity, info),
-        });
-      }
+      deps.applyOverlay(c.el, {
+        videoHit: hit.video !== null,
+        uperHit: hit.uper !== null,
+        onUnblockVideo: () => void unblockVideo(info, identity),
+        onUnblockUper: () => void unblockUper(identity, info),
+      });
       stats.masked += 1;
     } else if (isOverlayed(c.el)) {
       deps.removeOverlay(c.el);

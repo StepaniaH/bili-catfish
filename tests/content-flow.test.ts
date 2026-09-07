@@ -47,7 +47,7 @@ describe('reconcileCards', () => {
     expect(deps.removeOverlay).toHaveBeenCalledWith(el);
   });
 
-  it('does not re-overlay an already-masked card but still counts it as masked', async () => {
+  it('re-applies overlay to an already-masked matching card and counts it as masked', async () => {
     state = emptyState();
     state.upers['2'] = { mid: '2', blockedAt: 1 };
     const el = makeCard('BVA');
@@ -58,8 +58,23 @@ describe('reconcileCards', () => {
     });
     const n = await reconcileCards([{ el, bvid: 'BVA', aid: null }], deps);
     expect(n.masked).toBe(1);
-    expect(deps.applyOverlay).not.toHaveBeenCalled();
+    expect(deps.applyOverlay).toHaveBeenCalledWith(el, expect.objectContaining({ uperHit: true, videoHit: false }));
     expect(deps.removeOverlay).not.toHaveBeenCalled();
+  });
+
+  it('refreshes overlay when hit state changes on rescan (video-only mask gains uper block)', async () => {
+    state = emptyState();
+    state.videos['1'] = { aid: '1', bvid: 'BVA', blockedAt: 1 };
+    state.upers['2'] = { mid: '2', blockedAt: 2 };
+    const el = makeCard('BVA');
+    el.classList.add('bcf-card');
+    el.appendChild(Object.assign(document.createElement('div'), { className: 'bcf-mask' }));
+    const deps = makeDeps({
+      lookupInfo: async () => new Map([['bvid:BVA', { aid: '1', bvid: 'BVA', mid: '2', upName: 'UP' }]]),
+    });
+    const n = await reconcileCards([{ el, bvid: 'BVA', aid: null }], deps);
+    expect(n.masked).toBe(1);
+    expect(deps.applyOverlay).toHaveBeenCalledWith(el, expect.objectContaining({ uperHit: true, videoHit: true }));
   });
 
   it('paused state removes all overlays and blocks new ones', async () => {
