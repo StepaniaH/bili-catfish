@@ -4,6 +4,7 @@ import { cpSync, existsSync, mkdirSync } from 'node:fs';
 mkdirSync('dist', { recursive: true });
 cpSync('manifest.json', 'dist/manifest.json');
 cpSync('src/content/styles.css', 'dist/styles.css');
+cpSync('icons', 'dist/icons', { recursive: true });
 for (const [src, dest] of [
   ['src/options/options.html', 'dist/options.html'],
   ['src/popup/popup.html', 'dist/popup.html'],
