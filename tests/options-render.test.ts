@@ -2,7 +2,8 @@
 import { readFileSync } from 'node:fs';
 import { resolve } from 'node:path';
 import { describe, it, expect, vi } from 'vitest';
-import { renderList, formatImportSummary } from '../src/options/options';
+import { renderList, formatImportSummary, renderCategories } from '../src/options/options';
+import { CATEGORY_KEYS } from '../src/shared/types';
 import type { ImportSummary } from '../src/shared/sync';
 
 describe('renderList', () => {
@@ -50,5 +51,19 @@ describe('settings toggles html', () => {
     const popupHtml = readFileSync(resolve(process.cwd(), 'src/popup/popup.html'), 'utf8');
     expect(popupHtml).toContain('id="bcf-block-courses"');
     expect(popupHtml).toContain('id="bcf-block-promos"');
+  });
+});
+
+describe('renderCategories', () => {
+  it('renders one toggle per category and reports changes', () => {
+    const c = document.createElement('div');
+    const onChange = vi.fn();
+    renderCategories(c, { 番剧: true }, onChange);
+    const boxes = c.querySelectorAll('input[type="checkbox"]');
+    expect(boxes).toHaveLength(CATEGORY_KEYS.length);
+    const bangumi = [...boxes].find((b) => (b.parentElement?.textContent ?? '').includes('番剧')) as HTMLInputElement;
+    expect(bangumi.checked).toBe(true);
+    bangumi.click();
+    expect(onChange).toHaveBeenCalledWith('番剧', false);
   });
 });

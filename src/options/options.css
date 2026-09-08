@@ -4,6 +4,9 @@ h1 { font-size: 20px; }
 h2 { font-size: 16px; margin: 20px 0 8px; }
 #bcf-count { color: #61666d; font-size: 13px; }
 .bcf-status-row { display: flex; gap: 16px; align-items: center; padding: 8px 12px; background: #f1f2f3; border-radius: 6px; font-size: 14px; }
+.bcf-categories { flex-wrap: wrap; }
+.bcf-categories label { display: inline-flex; gap: 4px; align-items: center; font-size: 13px; }
+.bcf-categories-label { font-size: 13px; color: #61666d; }
 .bcf-row { display: flex; align-items: center; justify-content: space-between; gap: 12px; padding: 8px 4px; border-bottom: 1px solid #e3e5e7; }
 .bcf-row-title { font-size: 14px; font-weight: 500; }
 .bcf-row-sub { font-size: 12px; color: #61666d; margin-top: 2px; }

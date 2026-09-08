@@ -1,9 +1,9 @@
 import {
   clearAll, createChromeStorage, loadState, removeUperRule, removeVideoRule, saveState, setBlockAds, setBlockCourses,
-  setBlockPromos, setPaused,
+  setBlockPromos, setBlockedCategory, setPaused,
 } from '../shared/store';
 import { buildExport, mergeImport, parseImport, type ImportSummary } from '../shared/sync';
-import type { BlockState } from '../shared/types';
+import { CATEGORY_KEYS, type BlockState } from '../shared/types';
 
 const storage = createChromeStorage();
 
@@ -50,6 +50,23 @@ export function renderList(
     btn.addEventListener('click', () => onRemove(item.id));
     row.append(info, btn);
     container.appendChild(row);
+  }
+}
+
+export function renderCategories(
+  container: HTMLElement,
+  checked: Record<string, boolean>,
+  onChange: (key: string, on: boolean) => void,
+): void {
+  container.textContent = '';
+  for (const key of CATEGORY_KEYS) {
+    const label = document.createElement('label');
+    const box = document.createElement('input');
+    box.type = 'checkbox';
+    box.checked = checked[key] === true;
+    box.addEventListener('click', () => onChange(key, box.checked));
+    label.append(box, document.createTextNode(key));
+    container.appendChild(label);
   }
 }
 
@@ -101,6 +118,10 @@ async function refresh(): Promise<void> {
   el<HTMLInputElement>('bcf-block-ads').checked = state.blockAds;
   el<HTMLInputElement>('bcf-block-courses').checked = state.blockCourses;
   el<HTMLInputElement>('bcf-block-promos').checked = state.blockPromos;
+  renderCategories(el<HTMLSpanElement>('bcf-categories'), state.blockedCategories, async (key, on) => {
+    await setBlockedCategory(storage, key, on);
+    await refresh();
+  });
   el<HTMLSpanElement>('bcf-status').textContent = state.paused ? '已暂停' : '已启用';
 }
 
