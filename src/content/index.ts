@@ -1,6 +1,6 @@
 import { extractAid } from '../core/bili-ids';
 import { extractDislike } from '../core/endpoints';
-import { isAdCard, isCategoryCard, isPromoCard } from './ad-detect';
+import { isAdCard, isCategoryCard, isCourseCard, isPromoCard } from './ad-detect';
 import { matchCard, type CardIdentity } from '../core/match';
 import type { BlockState } from '../shared/types';
 import { addUperRule, addVideoRule, createChromeStorage, loadState, onStateChange, removeUperRule, removeVideoRule } from '../shared/store';
@@ -34,7 +34,9 @@ export async function reconcileCards(cards: CardRef[], deps: ReconcileDeps): Pro
   const promoHitOf = (el: Element): boolean => state.blockPromos && isPromoCard(el);
   const categoryHitOf = (el: Element): { hit: boolean; name?: string } => {
     for (const [key, on] of Object.entries(state.blockedCategories)) {
-      if (on && isCategoryCard(el, [key])) return { hit: true, name: key };
+      if (!on) continue;
+      const hit = key === '课堂' ? isCourseCard(el) : isCategoryCard(el, [key]);
+      if (hit) return { hit: true, name: key };
     }
     return { hit: false };
   };
@@ -51,7 +53,6 @@ export async function reconcileCards(cards: CardRef[], deps: ReconcileDeps): Pro
         uperHit: false,
         adHit,
         promoHit,
-        courseHit: false,
         categoryHit: category.hit,
         categoryName: category.name,
         onUnblockVideo: () => void unblockVideo(null, { aid: c.aid, bvid: c.bvid, mid: null }),
@@ -81,7 +82,6 @@ export async function reconcileCards(cards: CardRef[], deps: ReconcileDeps): Pro
           uperHit: hit.uper !== null,
           adHit,
           promoHit,
-          courseHit: false,
           categoryHit: category.hit,
           categoryName: category.name,
           onUnblockVideo: () => void unblockVideo(info, identity),

@@ -217,7 +217,7 @@ describe('reconcileCards', () => {
 
   it('masks identity-less 课堂 card via categoryHit without lookup', async () => {
     const el = document.createElement('div');
-    el.innerHTML = '<span>课堂</span>';
+    el.innerHTML = '<a href="//www.bilibili.com/cheese/play/ss1">付费课程</a>';
     state = emptyState();
     state.blockedCategories['课堂'] = true;
     const deps = makeDeps();
