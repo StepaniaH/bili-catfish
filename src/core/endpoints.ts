@@ -5,6 +5,7 @@ export interface DislikeCapture {
   aid?: string;
   bvid?: string;
   mid?: string;
+  cancel: boolean;
 }
 
 function parseForm(body: string): URLSearchParams {
@@ -63,6 +64,12 @@ export function extractDislike(url: string, body: string | null): DislikeCapture
   }
   if (!gate.test(path)) return null;
   if (/\/(log|report)(\/|$)/i.test(path)) return null;
+  let isCancel = false;
+  try {
+    isCancel = /\/dislike\/cancel(\/|$)/i.test(new URL(url, 'https://www.bilibili.com').pathname);
+  } catch {
+    isCancel = /\/dislike\/cancel(\/|$)/i.test(url);
+  }
   const p = collectParams(url, body);
   const goto = p.get('goto') ?? '';
   const aid =
@@ -77,16 +84,16 @@ export function extractDislike(url: string, body: string | null): DislikeCapture
 
   const reasonId = p.get('reason_id');
   if (reasonId === '1') {
-    return hasVideoId ? { kind: 'video', aid: aid ?? undefined, bvid, mid: mid ?? undefined } : null;
+    return hasVideoId ? { kind: 'video', aid: aid ?? undefined, bvid, mid: mid ?? undefined, cancel: isCancel } : null;
   }
   if (reasonId === '4') {
-    return mid ? { kind: 'upper', mid } : null;
+    return mid ? { kind: 'upper', mid, cancel: isCancel } : null;
   }
   if (reasonId) return null;
 
   if (goto === 'up' || (mid && !hasVideoId)) {
-    return mid ? { kind: 'upper', mid } : null;
+    return mid ? { kind: 'upper', mid, cancel: isCancel } : null;
   }
-  if (hasVideoId) return { kind: 'video', aid: aid ?? undefined, bvid, mid: mid ?? undefined };
+  if (hasVideoId) return { kind: 'video', aid: aid ?? undefined, bvid, mid: mid ?? undefined, cancel: isCancel };
   return null;
 }

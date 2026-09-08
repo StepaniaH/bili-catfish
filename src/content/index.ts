@@ -147,6 +147,16 @@ async function unblockUper(identity: CardIdentity, info: LookupInfo | null | und
 async function recordCapture(url: string, body: string | null): Promise<void> {
   const cap = extractDislike(url, body);
   if (!cap) return;
+  if (cap.cancel) {
+    if (cap.kind === 'video') {
+      const id = cap.aid ?? cap.bvid;
+      if (!id) return;
+      if (await removeVideoRule(storage, id)) showToast('已取消屏蔽该视频');
+    } else if (cap.mid) {
+      if (await removeUperRule(storage, cap.mid)) showToast('已取消屏蔽该 UP 主');
+    }
+    return;
+  }
   if (cap.kind === 'video') {
     if (!cap.aid && !cap.bvid) return;
     const info = cap.aid ? (await lookup.lookup([{ aid: cap.aid }])).get(cacheKey({ aid: cap.aid })) : (await lookup.lookup([{ bvid: cap.bvid! }])).get(cacheKey({ bvid: cap.bvid! }));
