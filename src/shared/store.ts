@@ -1,4 +1,4 @@
-import { emptyState, type BlockState, type UperRule, type VideoRule } from './types';
+import { emptyState, CATEGORY_KEYS, type BlockState, type UperRule, type VideoRule } from './types';
 
 export const STORAGE_KEY = 'bcf-state';
 
@@ -60,8 +60,9 @@ function isRecord(v: unknown): v is Record<string, unknown> {
 function parseBlockedCategories(v: unknown): Record<string, boolean> {
   if (!isRecord(v)) return {};
   const out: Record<string, boolean> = {};
-  for (const [k, val] of Object.entries(v)) {
-    if (typeof val === 'boolean') out[k] = val;
+  for (const key of CATEGORY_KEYS) {
+    const val = v[key];
+    if (typeof val === 'boolean') out[key] = val;
   }
   return out;
 }

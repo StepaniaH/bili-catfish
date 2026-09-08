@@ -145,6 +145,16 @@ it('onStateChange fires on writes', async () => {
 });
 
 describe('blockedCategories', () => {
+  it('sanitizes corrupt storage: keeps only known category keys', async () => {
+    const s = createMemoryStorage();
+    await s.set('bcf-state', {
+      videos: {},
+      upers: {},
+      blockedCategories: { '垃圾': true, '番剧': true },
+    });
+    expect((await loadState(s)).blockedCategories).toEqual({ '番剧': true });
+  });
+
   it('defaults to empty and round-trips per-category toggles', async () => {
     const s = createMemoryStorage();
     expect((await loadState(s)).blockedCategories).toEqual({});

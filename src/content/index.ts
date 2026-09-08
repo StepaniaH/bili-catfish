@@ -202,8 +202,6 @@ export function installUndoSync(deps: UndoDeps): void {
       if (!node || (node.textContent ?? '').trim() !== '撤销') return;
       const card = node.closest('.bili-video-card, .video-page-card, .video-list-item, .v-card, .floor-single-card, li');
       if (!card || !isOverlayed(card)) return;
-      e.preventDefault();
-      e.stopPropagation();
       void (async () => {
         const state = await deps.getState();
         const href = card.querySelector<HTMLAnchorElement>('a[href*="/video/"]')?.getAttribute('href') ?? '';
