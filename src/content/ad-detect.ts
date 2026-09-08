@@ -16,6 +16,12 @@ export function isCourseBadgeElement(el: Element): boolean {
   return isBadgeElement(el, COURSE_BADGE_TEXTS);
 }
 
+export function isTypeBadgeElement(el: Element): boolean {
+  if (isAdBadgeElement(el) || isCourseBadgeElement(el)) return true;
+  if (el.closest('a[href*="/video/"]')) return false;
+  return (CATEGORY_KEYS as readonly string[]).includes((el.textContent ?? '').trim());
+}
+
 function hasBadge(card: Element, pred: (el: Element) => boolean): boolean {
   const candidates = card.querySelectorAll<HTMLElement>('span, i, div, p');
   for (const el of Array.from(candidates)) {

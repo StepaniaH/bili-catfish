@@ -1,5 +1,5 @@
 import { extractAid, extractBvid } from '../core/bili-ids';
-import { isAdBadgeElement, isCourseBadgeElement } from './ad-detect';
+import { isTypeBadgeElement } from './ad-detect';
 
 export interface CardRef {
   el: Element;
@@ -46,7 +46,7 @@ export function scanCards(root: Document | Element): CardRef[] {
   }
   const badgeCandidates = root.querySelectorAll<HTMLElement>('span, i, div, p');
   for (const el of Array.from(badgeCandidates)) {
-    if (!isAdBadgeElement(el) && !isCourseBadgeElement(el)) continue;
+    if (!isTypeBadgeElement(el)) continue;
     const card = el.closest(BADGE_CONTAINER_SELECTOR);
     if (!card || byEl.has(card)) continue;
     byEl.set(card, { el: card, bvid: null, aid: null });

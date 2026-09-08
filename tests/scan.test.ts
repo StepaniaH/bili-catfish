@@ -59,6 +59,14 @@ describe('scanCards', () => {
     expect(cards[0]!.aid).toBeNull();
   });
 
+  it('discovers floor category card by badge regardless of toggles', () => {
+    const root = doc('home-floor-bangumi.html');
+    const cards = scanCards(root);
+    expect(cards).toHaveLength(1);
+    expect(cards[0]!.bvid).toBeNull();
+    expect(cards[0]!.aid).toBeNull();
+  });
+
   it('does not discover badge text inside bare li (nav item)', () => {
     const root = document.createElement('div');
     root.innerHTML = '<ul><li><a href="//www.bilibili.com/cheese/"><span>课堂</span></a></li></ul>';
