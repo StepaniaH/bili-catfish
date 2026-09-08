@@ -1,3 +1,4 @@
+import { extractAid } from '../core/bili-ids';
 import { extractDislike } from '../core/endpoints';
 import { isAdCard, isCategoryCard, isCourseCard, isPromoCard } from './ad-detect';
 import { matchCard, type CardIdentity } from '../core/match';
@@ -177,6 +178,60 @@ export function matchMenuFallback(ownText: string, itemContainsVideoLink: boolea
   return isUper ? 'uper' : 'video';
 }
 
+export function undoPlan(state: BlockState, identity: CardIdentity): { video: boolean; uper: boolean } {
+  const hit = matchCard(state, identity);
+  return { video: hit.video !== null, uper: hit.uper !== null };
+}
+
+export interface UndoDeps {
+  getState: () => Promise<BlockState>;
+  lookupInfo: (keys: Array<{ bvid?: string | null; aid?: string | null }>) => Promise<Map<string, LookupInfo | null>>;
+  removeVideoRule: (id: string) => Promise<boolean>;
+  removeUperRule: (mid: string) => Promise<boolean>;
+  removeOverlay: (card: Element) => void;
+  showToast: (text: string) => void;
+}
+
+export function installUndoSync(deps: UndoDeps): void {
+  document.addEventListener(
+    'click',
+    (e) => {
+      const t = e.target as HTMLElement | null;
+      if (!t) return;
+      const node = t.closest<HTMLElement>('span, i, div, p, button, li');
+      if (!node || (node.textContent ?? '').trim() !== '撤销') return;
+      const card = node.closest('.bili-video-card, .video-page-card, .video-list-item, .v-card, .floor-single-card, li');
+      if (!card || !isOverlayed(card)) return;
+      e.preventDefault();
+      e.stopPropagation();
+      void (async () => {
+        const state = await deps.getState();
+        const href = card.querySelector<HTMLAnchorElement>('a[href*="/video/"]')?.getAttribute('href') ?? '';
+        const bvid = /BV[0-9A-Za-z]{10}/.exec(href)?.[0] ?? null;
+        const aid = extractAid(href);
+        let identity: CardIdentity = { aid, bvid, mid: null };
+        if (Object.keys(state.upers).length > 0 && (bvid || aid)) {
+          const infos = await deps.lookupInfo([{ bvid, aid }]);
+          const info = infos.get(cacheKey({ bvid, aid }));
+          identity = { aid: info?.aid ?? aid, bvid: info?.bvid ?? bvid, mid: info?.mid ?? null };
+        }
+        const plan = undoPlan(state, identity);
+        const parts: string[] = [];
+        if (plan.video) {
+          const id = identity.aid ?? identity.bvid;
+          if (id && (await deps.removeVideoRule(id))) parts.push('已取消屏蔽该视频');
+        }
+        if (plan.uper && identity.mid && (await deps.removeUperRule(identity.mid))) parts.push('已取消屏蔽该 UP 主');
+        if (parts.length > 0) {
+          deps.removeOverlay(card);
+          deps.showToast(parts.join(' · '));
+        }
+      })();
+    },
+    true,
+  );
+}
+
 function installDomFallback(): void {
   document.addEventListener(
     'click',
@@ -275,8 +330,17 @@ function installRescan(): void {
 function main(): void {
   const kind = pageKind();
   if (kind === 'other') return;
+  installUndoSync({
+    getState: () => loadState(storage),
+    lookupInfo: (keys) => lookup.lookup(keys),
+    removeVideoRule: (id) => removeVideoRule(storage, id),
+    removeUperRule: (mid) => removeUperRule(storage, mid),
+    removeOverlay,
+    showToast,
+  });
   if (kind === 'space') {
     installSpace();
+    installRescan();
     return;
   }
   installCaptureForwarding((url, body) => {
