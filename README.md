@@ -53,7 +53,7 @@ npm run watch     # 监听构建
 
 技术栈：TypeScript（strict）、esbuild（IIFE）、Chrome MV3、零运行时依赖。
 
-支持页面：Bilibili 首页推荐流、搜索结果页、视频页相关推荐、UP 主主页（仅横幅）。Bilibili 改版可能导致选择器或端点失效；端点实测记录见 [docs/bili-dislike-endpoints.md](docs/bili-dislike-endpoints.md)，历史设计文档见 [docs/superpowers/specs](docs/superpowers/specs)。
+支持页面：Bilibili 首页推荐流、搜索结果页、视频页相关推荐、UP 主主页（仅横幅）。Bilibili 改版可能导致选择器或端点失效；发现失效时欢迎提 Issue。
 
 ## License
 
