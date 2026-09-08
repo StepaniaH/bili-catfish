@@ -13,8 +13,9 @@ h1 { font-size: 18px; font-weight: 800; letter-spacing: 0.02em; margin: 0; }
 .bcf-switch-grid label { padding: 8px 0; border-bottom: 1px solid #f0f1f3; font-size: 13px; cursor: pointer; }
 .bcf-category-grid { display: grid; grid-template-columns: repeat(5, 1fr); border: 1px solid #e5e7eb; border-radius: 8px; overflow: hidden; }
 .bcf-category-grid label { padding: 9px 12px; font-size: 13px; cursor: pointer; border-right: 1px solid #f0f1f3; border-bottom: 1px solid #f0f1f3; }
-.bcf-category-grid label:nth-child(5n) { border-right: none; }
-.bcf-category-grid label:nth-last-child(-n+5) { border-bottom: none; }
+.bcf-category-grid label:nth-child(5) { border-right: none; }
+.bcf-category-grid label:last-child { border-right: none; border-bottom: none; }
+.bcf-category-grid label:nth-last-child(-n+4) { border-bottom: none; }
 .bcf-row { display: grid; grid-template-columns: 1fr auto auto; gap: 12px; align-items: center; padding: 8px 0; border-bottom: 1px solid #f0f1f3; }
 .bcf-row-main { min-width: 0; }
 .bcf-row-title { font-size: 13px; font-weight: 600; color: #18191c; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
