@@ -12,12 +12,13 @@ function makeCard(bvid: string): HTMLElement {
 }
 
 function makeDeps(over: Partial<ReconcileDeps> & Partial<BlockState> = {}): ReconcileDeps {
-  const { getState, lookupInfo, applyOverlay, removeOverlay, ...stateOver } = over;
+  const { getState, lookupInfo, applyOverlay, removeOverlay, backfillUperName, ...stateOver } = over;
   return {
     getState: getState ?? (async () => ({ ...state, ...stateOver })),
     lookupInfo: lookupInfo ?? vi.fn(async () => new Map()),
     applyOverlay: applyOverlay ?? vi.fn(),
     removeOverlay: removeOverlay ?? vi.fn(),
+    backfillUperName: backfillUperName ?? vi.fn(async () => {}),
   };
 }
 
@@ -259,5 +260,31 @@ describe('reconcileCards', () => {
     expect(deps.removeOverlay).toHaveBeenCalledWith(el);
     expect(deps.applyOverlay).not.toHaveBeenCalled();
     expect(deps.lookupInfo).not.toHaveBeenCalled();
+  });
+
+  it('backfills missing uper name from lookup info', async () => {
+    const el = document.createElement('div');
+    el.innerHTML = '<a href="/video/BV1abc0000000">t</a>';
+    const backfillUperName = vi.fn();
+    const deps = makeDeps(
+      { videos: {}, upers: { '42': { mid: '42', blockedAt: 1 } }, paused: false, blockAds: false, blockPromos: false, blockedCategories: {} },
+    );
+    deps.backfillUperName = backfillUperName;
+    deps.lookupInfo = vi.fn(async () => new Map([['bvid:BV1abc0000000', { aid: '100', bvid: 'BV1abc0000000', mid: '42', title: '', upName: '熊哥 BigBearTV' }]]));
+    await reconcileCards([{ el, bvid: 'BV1abc0000000', aid: null }], deps);
+    expect(backfillUperName).toHaveBeenCalledWith('42', '熊哥 BigBearTV');
+  });
+
+  it('does not backfill when name already present', async () => {
+    const el = document.createElement('div');
+    el.innerHTML = '<a href="/video/BV1abc0000000">t</a>';
+    const backfillUperName = vi.fn();
+    const deps = makeDeps(
+      { videos: {}, upers: { '42': { mid: '42', name: '已有名字', blockedAt: 1 } }, paused: false, blockAds: false, blockPromos: false, blockedCategories: {} },
+    );
+    deps.backfillUperName = backfillUperName;
+    deps.lookupInfo = vi.fn(async () => new Map([['bvid:BV1abc0000000', { aid: '100', bvid: 'BV1abc0000000', mid: '42', title: '', upName: '熊哥 BigBearTV' }]]));
+    await reconcileCards([{ el, bvid: 'BV1abc0000000', aid: null }], deps);
+    expect(backfillUperName).not.toHaveBeenCalled();
   });
 });

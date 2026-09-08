@@ -15,6 +15,7 @@ export interface ReconcileDeps {
   lookupInfo: (keys: Array<{ bvid?: string | null; aid?: string | null }>) => Promise<Map<string, LookupInfo | null>>;
   applyOverlay: typeof applyOverlay;
   removeOverlay: typeof removeOverlay;
+  backfillUperName: (mid: string, name: string) => Promise<void>;
 }
 
 export interface ReconcileStats {
@@ -71,6 +72,9 @@ export async function reconcileCards(
     const infos = await deps.lookupInfo(cards.filter((c) => c.bvid || c.aid).map((c) => ({ bvid: c.bvid, aid: c.aid })));
     for (const c of cards) {
       const info = infos.get(cacheKey({ bvid: c.bvid, aid: c.aid }));
+      if (info?.mid && info.upName && state.upers[info.mid] && !state.upers[info.mid].name) {
+        void deps.backfillUperName(info.mid, info.upName);
+      }
       const identity: CardIdentity = {
         aid: info?.aid ?? c.aid,
         bvid: info?.bvid ?? c.bvid,
@@ -308,6 +312,9 @@ function installRescan(): void {
           lookupInfo: (keys) => lookup.lookup(keys),
           applyOverlay,
           removeOverlay,
+          backfillUperName: async (mid, name) => {
+            await addUperRule(storage, { mid, name });
+          },
         },
         {
           suppressWhen: (s) => {
