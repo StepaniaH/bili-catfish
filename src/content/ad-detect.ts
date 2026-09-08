@@ -1,3 +1,5 @@
+import { CATEGORY_KEYS } from '../shared/types';
+
 export const AD_BADGE_TEXTS = ['广告', '推广'];
 export const COURSE_BADGE_TEXTS = ['课堂'];
 
@@ -33,4 +35,15 @@ export function isCourseCard(card: Element): boolean {
 
 export function isPromoCard(card: Element): boolean {
   return card.querySelector('.vui_icon.bili-video-card__stats--icon') !== null;
+}
+
+export const CATEGORY_BADGES: Record<string, string[]> = Object.fromEntries(
+  CATEGORY_KEYS.map((key) => [key, [key]]),
+);
+
+export function isCategoryCard(card: Element, keywords: string[]): boolean {
+  return hasBadge(card, (el) => {
+    if (el.closest('a[href*="/video/"]')) return false;
+    return keywords.includes((el.textContent ?? '').trim());
+  });
 }

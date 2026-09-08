@@ -1,6 +1,7 @@
 // @vitest-environment jsdom
 import { describe, it, expect } from 'vitest';
-import { isAdCard, AD_BADGE_TEXTS, isCourseCard, isPromoCard } from '../src/content/ad-detect';
+import { isAdCard, AD_BADGE_TEXTS, isCourseCard, isPromoCard, CATEGORY_BADGES, isCategoryCard } from '../src/content/ad-detect';
+import { CATEGORY_KEYS } from '../src/shared/types';
 
 function cardWith(html: string): HTMLElement {
   const el = document.createElement('div');
@@ -82,5 +83,31 @@ describe('isPromoCard', () => {
     const card = document.createElement('div');
     card.innerHTML = '<div class="bili-video-card__stats"><i class="vui_icon other-icon"></i></div>';
     expect(isPromoCard(card)).toBe(false);
+  });
+});
+
+describe('isCategoryCard', () => {
+  it('detects exact category badge', () => {
+    const card = document.createElement('div');
+    card.innerHTML = '<div class="badge"><span class="floor-title">番剧</span></div><h3>小猪佩奇</h3>';
+    expect(isCategoryCard(card, ['番剧'])).toBe(true);
+  });
+
+  it('rejects up name containing the keyword', () => {
+    const card = document.createElement('div');
+    card.innerHTML = '<div class="badge"><span>国创</span></div><span>哔哩哔哩番剧</span><h3>正片</h3>';
+    expect(isCategoryCard(card, ['番剧'])).toBe(false);
+  });
+
+  it('rejects badge inside a /video/ anchor', () => {
+    const card = document.createElement('div');
+    card.innerHTML = '<a href="/video/BV1abc"><span>番剧</span></a>';
+    expect(isCategoryCard(card, ['番剧'])).toBe(false);
+  });
+
+  it('maps every CATEGORY_KEY to itself', () => {
+    for (const key of CATEGORY_KEYS) {
+      expect(CATEGORY_BADGES[key]).toEqual([key]);
+    }
   });
 });
