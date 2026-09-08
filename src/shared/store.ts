@@ -57,6 +57,15 @@ function isRecord(v: unknown): v is Record<string, unknown> {
   return typeof v === 'object' && v !== null;
 }
 
+function parseBlockedCategories(v: unknown): Record<string, boolean> {
+  if (!isRecord(v)) return {};
+  const out: Record<string, boolean> = {};
+  for (const [k, val] of Object.entries(v)) {
+    if (typeof val === 'boolean') out[k] = val;
+  }
+  return out;
+}
+
 export async function loadState(s: KVStorage): Promise<BlockState> {
   const raw = await s.get(STORAGE_KEY);
   if (!isRecord(raw) || !isRecord(raw.videos) || !isRecord(raw.upers)) return emptyState();
@@ -75,6 +84,7 @@ export async function loadState(s: KVStorage): Promise<BlockState> {
     blockAds: raw.blockAds === true,
     blockCourses: raw.blockCourses === true,
     blockPromos: raw.blockPromos === true,
+    blockedCategories: parseBlockedCategories(raw.blockedCategories),
   };
 }
 
@@ -187,6 +197,14 @@ export async function setBlockPromos(s: KVStorage, blockPromos: boolean): Promis
   await serialize(async () => {
     const state = await loadState(s);
     state.blockPromos = blockPromos;
+    await saveState(s, state);
+  });
+}
+
+export async function setBlockedCategory(s: KVStorage, key: string, on: boolean): Promise<void> {
+  await serialize(async () => {
+    const state = await loadState(s);
+    state.blockedCategories[key] = on;
     await saveState(s, state);
   });
 }

@@ -2,7 +2,7 @@ import { describe, it, expect, vi } from 'vitest';
 import {
   createMemoryStorage, loadState, addVideoRule, addUperRule,
   removeVideoRule, removeUperRule, setPaused, setBlockAds, clearAll, onStateChange,
-  setBlockCourses, setBlockPromos,
+  setBlockCourses, setBlockPromos, setBlockedCategory,
 } from '../src/shared/store';
 import { emptyState } from '../src/shared/types';
 
@@ -142,6 +142,19 @@ it('onStateChange fires on writes', async () => {
   await addVideoRule(s, { aid: '1' });
   expect(cb).toHaveBeenCalled();
   off();
+});
+
+describe('blockedCategories', () => {
+  it('defaults to empty and round-trips per-category toggles', async () => {
+    const s = createMemoryStorage();
+    expect((await loadState(s)).blockedCategories).toEqual({});
+    await setBlockedCategory(s, '番剧', true);
+    await setBlockedCategory(s, '电影', true);
+    await setBlockedCategory(s, '番剧', false);
+    const state = await loadState(s);
+    expect(state.blockedCategories['番剧']).toBe(false);
+    expect(state.blockedCategories['电影']).toBe(true);
+  });
 });
 
 describe('blockCourses/blockPromos', () => {

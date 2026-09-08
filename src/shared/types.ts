@@ -15,6 +15,8 @@ export interface UperRule {
   blockedAt: number;
 }
 
+export const CATEGORY_KEYS = ['国创', '综艺', '番剧', '直播', '电影', '电视剧', '纪录片', '漫画'] as const;
+
 export interface BlockState {
   videos: Record<string, VideoRule>;
   upers: Record<string, UperRule>;
@@ -22,8 +24,9 @@ export interface BlockState {
   blockAds: boolean;
   blockCourses: boolean;
   blockPromos: boolean;
+  blockedCategories: Record<string, boolean>;
 }
 
 export function emptyState(): BlockState {
-  return { videos: {}, upers: {}, paused: false, blockAds: false, blockCourses: false, blockPromos: false };
+  return { videos: {}, upers: {}, paused: false, blockAds: false, blockCourses: false, blockPromos: false, blockedCategories: {} };
 }
