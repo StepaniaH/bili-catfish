@@ -215,16 +215,17 @@ describe('reconcileCards', () => {
     expect(offDeps.removeOverlay).toHaveBeenCalled();
   });
 
-  it('masks identity-less course card via courseHit without lookup', async () => {
+  it('masks identity-less 课堂 card via categoryHit without lookup', async () => {
     const el = document.createElement('div');
     el.innerHTML = '<span>课堂</span>';
     state = emptyState();
-    state.blockCourses = true;
+    state.blockedCategories['课堂'] = true;
     const deps = makeDeps();
     await reconcileCards([{ el, bvid: null, aid: null }], deps);
     expect(deps.applyOverlay).toHaveBeenCalled();
     expect(deps.lookupInfo).not.toHaveBeenCalled();
-    expect(vi.mocked(deps.applyOverlay).mock.calls[0]![1].courseHit).toBe(true);
+    expect(vi.mocked(deps.applyOverlay).mock.calls[0]![1].categoryHit).toBe(true);
+    expect(vi.mocked(deps.applyOverlay).mock.calls[0]![1].categoryName).toBe('课堂');
   });
 
   it('masks floor category card via categoryHit without lookup', async () => {

@@ -61,14 +61,14 @@ describe('formatImportSummary', () => {
 });
 
 describe('settings toggles html', () => {
-  it('options and popup expose course/promo toggles', () => {
+  it('options and popup no longer expose the course toggle; promo stays', () => {
     const optionsHtml = readFileSync(resolve(process.cwd(), 'src/options/options.html'), 'utf8');
-    expect(optionsHtml).toContain('id="bcf-block-courses"');
-    expect(optionsHtml).toContain('屏蔽课堂');
+    expect(optionsHtml).not.toContain('bcf-block-courses');
+    expect(optionsHtml).not.toContain('屏蔽课堂');
     expect(optionsHtml).toContain('id="bcf-block-promos"');
     expect(optionsHtml).toContain('屏蔽推广');
     const popupHtml = readFileSync(resolve(process.cwd(), 'src/popup/popup.html'), 'utf8');
-    expect(popupHtml).toContain('id="bcf-block-courses"');
+    expect(popupHtml).not.toContain('bcf-block-courses');
     expect(popupHtml).toContain('id="bcf-block-promos"');
   });
 });

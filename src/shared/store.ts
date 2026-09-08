@@ -78,14 +78,17 @@ export async function loadState(s: KVStorage): Promise<BlockState> {
   for (const [k, v] of Object.entries(raw.upers)) {
     if (isRecord(v) && typeof v.mid === 'string') upers[k] = v as unknown as UperRule;
   }
+  const blockedCategories = parseBlockedCategories(raw.blockedCategories);
+  if (raw.blockCourses === true && blockedCategories['课堂'] === undefined) {
+    blockedCategories['课堂'] = true;
+  }
   return {
     videos,
     upers,
     paused: raw.paused === true,
     blockAds: raw.blockAds === true,
-    blockCourses: raw.blockCourses === true,
     blockPromos: raw.blockPromos === true,
-    blockedCategories: parseBlockedCategories(raw.blockedCategories),
+    blockedCategories,
   };
 }
 
@@ -182,14 +185,6 @@ export async function setBlockAds(s: KVStorage, blockAds: boolean): Promise<void
   await serialize(async () => {
     const state = await loadState(s);
     state.blockAds = blockAds;
-    await saveState(s, state);
-  });
-}
-
-export async function setBlockCourses(s: KVStorage, blockCourses: boolean): Promise<void> {
-  await serialize(async () => {
-    const state = await loadState(s);
-    state.blockCourses = blockCourses;
     await saveState(s, state);
   });
 }

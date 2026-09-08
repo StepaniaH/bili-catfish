@@ -6,7 +6,7 @@ import type { BlockState } from '../src/shared/types';
 const state: BlockState = {
   videos: { '100': { aid: '100', bvid: 'BV1abc0000000', blockedAt: 1 } },
   upers: { '42': { mid: '42', blockedAt: 1 } },
-  paused: false, blockAds: false, blockCourses: false, blockPromos: false, blockedCategories: {},
+  paused: false, blockAds: false, blockPromos: false, blockedCategories: {},
 };
 
 function makeCard(masked: boolean): HTMLElement {

@@ -1,5 +1,5 @@
 import {
-  clearAll, createChromeStorage, loadState, removeUperRule, removeVideoRule, saveState, setBlockAds, setBlockCourses,
+  clearAll, createChromeStorage, loadState, removeUperRule, removeVideoRule, saveState, setBlockAds,
   setBlockPromos, setBlockedCategory, setPaused,
 } from '../shared/store';
 import { buildExport, mergeImport, parseImport, type ImportSummary } from '../shared/sync';
@@ -127,7 +127,6 @@ async function refresh(): Promise<void> {
   const pausedEl = el<HTMLInputElement>('bcf-paused');
   pausedEl.checked = state.paused;
   el<HTMLInputElement>('bcf-block-ads').checked = state.blockAds;
-  el<HTMLInputElement>('bcf-block-courses').checked = state.blockCourses;
   el<HTMLInputElement>('bcf-block-promos').checked = state.blockPromos;
   renderCategories(el<HTMLSpanElement>('bcf-categories'), state.blockedCategories, async (key, on) => {
     await setBlockedCategory(storage, key, on);
@@ -180,11 +179,6 @@ export function main(): void {
 
   el<HTMLInputElement>('bcf-block-ads').addEventListener('change', async (e) => {
     await setBlockAds(storage, (e.target as HTMLInputElement).checked);
-    await refresh();
-  });
-
-  el<HTMLInputElement>('bcf-block-courses').addEventListener('change', async (e) => {
-    await setBlockCourses(storage, (e.target as HTMLInputElement).checked);
     await refresh();
   });
 

@@ -2,7 +2,7 @@ import { describe, it, expect, vi } from 'vitest';
 import {
   createMemoryStorage, loadState, addVideoRule, addUperRule,
   removeVideoRule, removeUperRule, setPaused, setBlockAds, clearAll, onStateChange,
-  setBlockCourses, setBlockPromos, setBlockedCategory,
+  setBlockPromos, setBlockedCategory,
 } from '../src/shared/store';
 import { emptyState } from '../src/shared/types';
 
@@ -167,18 +167,23 @@ describe('blockedCategories', () => {
   });
 });
 
-describe('blockCourses/blockPromos', () => {
-  it('defaults to false and round-trips both flags', async () => {
+describe('blockPromos', () => {
+  it('defaults to false and round-trips', async () => {
     const s = createMemoryStorage();
-    const empty = await loadState(s);
-    expect(empty.blockCourses).toBe(false);
-    expect(empty.blockPromos).toBe(false);
-    await setBlockCourses(s, true);
+    expect((await loadState(s)).blockPromos).toBe(false);
     await setBlockPromos(s, true);
+    expect((await loadState(s)).blockPromos).toBe(true);
+  });
+});
+
+describe('category unity migration', () => {
+  it('migrates legacy blockCourses into 课堂 and respects explicit false', async () => {
+    const s = createMemoryStorage();
+    await s.set('bcf-state', { videos: {}, upers: {}, paused: false, blockAds: false, blockCourses: true });
+    expect((await loadState(s)).blockedCategories['课堂']).toBe(true);
+    await s.set('bcf-state', { videos: {}, upers: {}, paused: false, blockAds: false, blockCourses: true, blockedCategories: { 课堂: false, 番剧: true } });
     const state = await loadState(s);
-    expect(state.blockCourses).toBe(true);
-    expect(state.blockPromos).toBe(true);
-    await setBlockCourses(s, false);
-    expect((await loadState(s)).blockCourses).toBe(false);
+    expect(state.blockedCategories['课堂']).toBe(false);
+    expect(state.blockedCategories['番剧']).toBe(true);
   });
 });
