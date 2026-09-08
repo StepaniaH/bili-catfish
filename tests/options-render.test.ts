@@ -58,6 +58,7 @@ describe('renderCategories', () => {
   it('renders one toggle per category and reports changes', () => {
     const c = document.createElement('div');
     const onChange = vi.fn();
+    document.body.appendChild(c);
     renderCategories(c, { 番剧: true }, onChange);
     const boxes = c.querySelectorAll('input[type="checkbox"]');
     expect(boxes).toHaveLength(CATEGORY_KEYS.length);

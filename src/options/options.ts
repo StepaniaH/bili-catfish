@@ -64,7 +64,7 @@ export function renderCategories(
     const box = document.createElement('input');
     box.type = 'checkbox';
     box.checked = checked[key] === true;
-    box.addEventListener('click', () => onChange(key, box.checked));
+    box.addEventListener('change', () => onChange(key, box.checked));
     label.append(box, document.createTextNode(key));
     container.appendChild(label);
   }
