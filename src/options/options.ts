@@ -35,20 +35,31 @@ export function renderList(
   for (const item of items) {
     const row = document.createElement('div');
     row.className = 'bcf-row';
-    const info = document.createElement('div');
-    info.className = 'bcf-row-info';
+    const main = document.createElement('div');
+    main.className = 'bcf-row-main';
     const t = document.createElement('div');
     t.className = 'bcf-row-title';
     t.textContent = item.title || '（未知标题）';
-    const sub = document.createElement('div');
-    sub.className = 'bcf-row-sub';
-    const time = item.blockedAt ? new Date(item.blockedAt).toLocaleString('zh-CN') : '';
-    sub.textContent = [item.sub, item.extra, time].filter(Boolean).join(' · ');
-    info.append(t, sub);
+    const meta = document.createElement('div');
+    meta.className = 'bcf-row-meta';
+    const idEl = document.createElement('code');
+    idEl.className = 'bcf-row-id';
+    idEl.textContent = item.sub;
+    meta.appendChild(idEl);
+    if (item.extra) {
+      const up = document.createElement('span');
+      up.className = 'bcf-row-up';
+      up.textContent = item.extra;
+      meta.appendChild(up);
+    }
+    main.append(t, meta);
+    const time = document.createElement('span');
+    time.className = 'bcf-row-time';
+    time.textContent = item.blockedAt ? new Date(item.blockedAt).toLocaleDateString('zh-CN') : '';
     const btn = document.createElement('button');
     btn.textContent = '取消屏蔽';
     btn.addEventListener('click', () => onRemove(item.id));
-    row.append(info, btn);
+    row.append(main, time, btn);
     container.appendChild(row);
   }
 }

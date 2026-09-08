@@ -7,10 +7,17 @@ h2 { font-size: 16px; margin: 20px 0 8px; }
 .bcf-categories { flex-wrap: wrap; }
 .bcf-categories label { display: inline-flex; gap: 4px; align-items: center; font-size: 13px; }
 .bcf-categories-label { font-size: 13px; color: #61666d; }
-.bcf-row { display: flex; align-items: center; justify-content: space-between; gap: 12px; padding: 8px 4px; border-bottom: 1px solid #e3e5e7; }
-.bcf-row-title { font-size: 14px; font-weight: 500; }
-.bcf-row-sub { font-size: 12px; color: #61666d; margin-top: 2px; }
-.bcf-row button, .bcf-actions button, .bcf-file-label { border: 1px solid #e3e5e7; background: #fff; border-radius: 4px; padding: 4px 12px; font-size: 13px; cursor: pointer; }
+.bcf-row { display: grid; grid-template-columns: 1fr auto auto; gap: 12px; align-items: center; background: #fff; border: 1px solid #eceef1; border-radius: 10px; padding: 10px 12px; margin-bottom: 8px; }
+.bcf-row:hover { box-shadow: 0 2px 8px rgba(0, 0, 0, 0.06); }
+.bcf-row-main { min-width: 0; }
+.bcf-row-title { font-size: 14px; font-weight: 600; color: #1c1e21; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.bcf-row-meta { display: flex; align-items: center; gap: 8px; margin-top: 3px; min-width: 0; }
+.bcf-row-id { font-family: ui-monospace, SFMono-Regular, Menlo, monospace; font-size: 11px; color: #c9ccd1; background: #f7f8fa; border-radius: 4px; padding: 1px 6px; }
+.bcf-row-up { font-size: 12px; color: #61666d; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.bcf-row-time { font-size: 12px; color: #9499a0; }
+.bcf-row button { border: 1px solid #ffe0e0; color: #e5484d; background: #fff; border-radius: 7px; padding: 5px 12px; font-size: 12px; cursor: pointer; white-space: nowrap; }
+.bcf-row button:hover { background: #fff5f5; }
+.bcf-actions button, .bcf-file-label { border: 1px solid #e3e5e7; background: #fff; border-radius: 4px; padding: 4px 12px; font-size: 13px; cursor: pointer; }
 .bcf-file-label { display: inline-block; }
 .bcf-file-label input { display: none; }
 .bcf-danger { border-color: #fb7299; color: #fb7299; }

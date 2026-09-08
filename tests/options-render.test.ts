@@ -29,6 +29,25 @@ describe('renderList', () => {
     (c.querySelector('button') as HTMLButtonElement).click();
     expect(onRemove).toHaveBeenCalledWith('42');
   });
+
+  it('renders table-style rows with faint id and up name', () => {
+    const c = document.createElement('div');
+    renderList(c, [{ id: '1', title: '标题 A', sub: '117195749202028', extra: 'UP：老番茄', blockedAt: 1767225600000 }], () => {});
+    const row = c.querySelector('.bcf-row')!;
+    expect(row.querySelector('.bcf-row-title')!.textContent).toBe('标题 A');
+    const idEl = row.querySelector('.bcf-row-id')!;
+    expect(idEl.textContent).toBe('117195749202028');
+    expect((row.querySelector('.bcf-row-up') as HTMLElement).textContent).toBe('UP：老番茄');
+    expect(row.querySelector('.bcf-row-time')!.textContent).toContain('2026');
+    const btn = row.querySelector('button')!;
+    expect(btn.textContent).toBe('取消屏蔽');
+  });
+
+  it('omits up span when extra is empty', () => {
+    const c = document.createElement('div');
+    renderList(c, [{ id: '1', title: 'T', sub: '42', extra: '', blockedAt: 0 }], () => {});
+    expect(c.querySelector('.bcf-row-up')).toBeNull();
+  });
 });
 
 describe('formatImportSummary', () => {
