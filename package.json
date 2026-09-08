@@ -1,9 +1,10 @@
 {
   "name": "bili-catfish",
   "private": true,
-  "version": "0.1.0",
+  "version": "0.0.1",
   "scripts": {
     "build": "node build.mjs",
+    "pack": "npm run build && rm -rf release && mkdir -p release && cd dist && zip -qr \"../release/bili-catfish-$npm_package_version.zip\" .",
     "watch": "node build.mjs --watch",
     "test": "vitest run",
     "typecheck": "tsc --noEmit"
