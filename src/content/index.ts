@@ -1,5 +1,5 @@
 import { extractDislike } from '../core/endpoints';
-import { isAdCard, isCourseCard, isPromoCard } from './ad-detect';
+import { isAdCard, isCategoryCard, isCourseCard, isPromoCard } from './ad-detect';
 import { matchCard, type CardIdentity } from '../core/match';
 import type { BlockState } from '../shared/types';
 import { addUperRule, addVideoRule, createChromeStorage, loadState, onStateChange, removeUperRule, removeVideoRule } from '../shared/store';
@@ -32,6 +32,12 @@ export async function reconcileCards(cards: CardRef[], deps: ReconcileDeps): Pro
   const adHitOf = (el: Element): boolean => state.blockAds && isAdCard(el);
   const promoHitOf = (el: Element): boolean => state.blockPromos && isPromoCard(el);
   const courseHitOf = (el: Element): boolean => state.blockCourses && isCourseCard(el);
+  const categoryHitOf = (el: Element): { hit: boolean; name?: string } => {
+    for (const [key, on] of Object.entries(state.blockedCategories)) {
+      if (on && isCategoryCard(el, [key])) return { hit: true, name: key };
+    }
+    return { hit: false };
+  };
 
   // 阶段 1：无网络 —— 视频规则（DOM id 直接匹配）+ 广告
   for (const c of cards) {
@@ -39,14 +45,16 @@ export async function reconcileCards(cards: CardRef[], deps: ReconcileDeps): Pro
     const adHit = adHitOf(c.el);
     const promoHit = promoHitOf(c.el);
     const courseHit = courseHitOf(c.el);
-    if (hit.video || adHit || promoHit || courseHit) {
+    const category = categoryHitOf(c.el);
+    if (hit.video || adHit || promoHit || courseHit || category.hit) {
       deps.applyOverlay(c.el, {
         videoHit: hit.video !== null,
         uperHit: false,
         adHit,
         promoHit,
         courseHit,
-        categoryHit: false,
+        categoryHit: category.hit,
+        categoryName: category.name,
         onUnblockVideo: () => void unblockVideo(null, { aid: c.aid, bvid: c.bvid, mid: null }),
         onUnblockUper: () => {},
       });
@@ -68,14 +76,16 @@ export async function reconcileCards(cards: CardRef[], deps: ReconcileDeps): Pro
       const adHit = adHitOf(c.el);
       const promoHit = promoHitOf(c.el);
       const courseHit = courseHitOf(c.el);
-      if (hit.video || hit.uper || adHit || promoHit || courseHit) {
+      const category = categoryHitOf(c.el);
+      if (hit.video || hit.uper || adHit || promoHit || courseHit || category.hit) {
         deps.applyOverlay(c.el, {
           videoHit: hit.video !== null,
           uperHit: hit.uper !== null,
           adHit,
           promoHit,
           courseHit,
-          categoryHit: false,
+          categoryHit: category.hit,
+          categoryName: category.name,
           onUnblockVideo: () => void unblockVideo(info, identity),
           onUnblockUper: () => void unblockUper(identity, info),
         });

@@ -226,4 +226,26 @@ describe('reconcileCards', () => {
     expect(deps.lookupInfo).not.toHaveBeenCalled();
     expect(vi.mocked(deps.applyOverlay).mock.calls[0]![1].courseHit).toBe(true);
   });
+
+  it('masks floor category card via categoryHit without lookup', async () => {
+    const el = document.createElement('div');
+    el.innerHTML = '<span>番剧</span>';
+    state = emptyState();
+    state.blockedCategories['番剧'] = true;
+    const deps = makeDeps();
+    await reconcileCards([{ el, bvid: null, aid: null }], deps);
+    expect(deps.applyOverlay).toHaveBeenCalled();
+    expect(deps.lookupInfo).not.toHaveBeenCalled();
+    expect(vi.mocked(deps.applyOverlay).mock.calls[0]![1].categoryHit).toBe(true);
+    expect(vi.mocked(deps.applyOverlay).mock.calls[0]![1].categoryName).toBe('番剧');
+  });
+
+  it('does not mask category card when toggle off', async () => {
+    const el = document.createElement('div');
+    el.innerHTML = '<span>番剧</span>';
+    state = emptyState();
+    const deps = makeDeps();
+    await reconcileCards([{ el, bvid: null, aid: null }], deps);
+    expect(deps.applyOverlay).not.toHaveBeenCalled();
+  });
 });
