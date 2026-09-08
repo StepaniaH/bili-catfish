@@ -22,10 +22,14 @@ export interface ReconcileStats {
   masked: number;
 }
 
-export async function reconcileCards(cards: CardRef[], deps: ReconcileDeps): Promise<ReconcileStats> {
+export async function reconcileCards(
+  cards: CardRef[],
+  deps: ReconcileDeps,
+  context: { suppressWhen?: (state: BlockState) => boolean } = {},
+): Promise<ReconcileStats> {
   const state = await deps.getState();
   const stats: ReconcileStats = { scanned: cards.length, masked: 0 };
-  if (state.paused) {
+  if (state.paused || context.suppressWhen?.(state) === true) {
     for (const c of cards) deps.removeOverlay(c.el);
     return stats;
   }
@@ -287,12 +291,21 @@ function installRescan(): void {
         return;
       }
       const cards = scanCards(document.body);
-      await reconcileCards(cards, {
-        getState: () => loadState(storage),
-        lookupInfo: (keys) => lookup.lookup(keys),
-        applyOverlay,
-        removeOverlay,
-      });
+      await reconcileCards(
+        cards,
+        {
+          getState: () => loadState(storage),
+          lookupInfo: (keys) => lookup.lookup(keys),
+          applyOverlay,
+          removeOverlay,
+        },
+        {
+          suppressWhen: (s) => {
+            const mid = pageKind() === 'space' ? extractSpaceMid() : null;
+            return !!mid && !!s.upers[mid];
+          },
+        },
+      );
     } catch (err) {
       if (!isExtensionContextValid()) {
         stop();

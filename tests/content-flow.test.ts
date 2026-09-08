@@ -1,7 +1,7 @@
 // @vitest-environment jsdom
 import { describe, it, expect, vi } from 'vitest';
 import { matchMenuFallback, reconcileCards, type ReconcileDeps } from '../src/content/index';
-import { emptyState } from '../src/shared/types';
+import { emptyState, type BlockState } from '../src/shared/types';
 
 function makeCard(bvid: string): HTMLElement {
   const el = document.createElement('div');
@@ -11,13 +11,13 @@ function makeCard(bvid: string): HTMLElement {
   return el;
 }
 
-function makeDeps(over: Partial<ReconcileDeps> = {}): ReconcileDeps {
+function makeDeps(over: Partial<ReconcileDeps> & Partial<BlockState> = {}): ReconcileDeps {
+  const { getState, lookupInfo, applyOverlay, removeOverlay, ...stateOver } = over;
   return {
-    getState: async () => state,
-    lookupInfo: vi.fn(async () => new Map()),
-    applyOverlay: vi.fn(),
-    removeOverlay: vi.fn(),
-    ...over,
+    getState: getState ?? (async () => ({ ...state, ...stateOver })),
+    lookupInfo: lookupInfo ?? vi.fn(async () => new Map()),
+    applyOverlay: applyOverlay ?? vi.fn(),
+    removeOverlay: removeOverlay ?? vi.fn(),
   };
 }
 
@@ -248,5 +248,16 @@ describe('reconcileCards', () => {
     const deps = makeDeps();
     await reconcileCards([{ el, bvid: null, aid: null }], deps);
     expect(deps.applyOverlay).not.toHaveBeenCalled();
+  });
+
+  it('suppresses masking when suppressWhen matches (space owner blocked)', async () => {
+    const el = document.createElement('div');
+    el.classList.add('bcf-card');
+    el.appendChild(Object.assign(document.createElement('div'), { className: 'bcf-mask' }));
+    const deps = makeDeps({ videos: {}, upers: { '42': { mid: '42', blockedAt: 1 } }, paused: false, blockAds: false, blockPromos: false, blockedCategories: {} });
+    await reconcileCards([{ el, bvid: null, aid: null }], deps, { suppressWhen: (s) => !!s.upers['42'] });
+    expect(deps.removeOverlay).toHaveBeenCalledWith(el);
+    expect(deps.applyOverlay).not.toHaveBeenCalled();
+    expect(deps.lookupInfo).not.toHaveBeenCalled();
   });
 });
