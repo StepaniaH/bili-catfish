@@ -51,6 +51,20 @@ describe('scanCards', () => {
     expect(refs[0]!.aid).toBeNull();
   });
 
+  it('discovers floor course card by badge', () => {
+    const root = doc('home-floor-course.html');
+    const cards = scanCards(root);
+    expect(cards).toHaveLength(1);
+    expect(cards[0]!.bvid).toBeNull();
+    expect(cards[0]!.aid).toBeNull();
+  });
+
+  it('does not discover badge text inside bare li (nav item)', () => {
+    const root = document.createElement('div');
+    root.innerHTML = '<ul><li><a href="//www.bilibili.com/cheese/"><span>课堂</span></a></li></ul>';
+    expect(scanCards(root)).toHaveLength(0);
+  });
+
   it('does not discover video-anchor card via course badge pass', () => {
     const root = document.createElement('div');
     root.innerHTML = '<div class="bili-video-card"><a href="/video/BV1course123"><span>课堂</span></a></div>';
