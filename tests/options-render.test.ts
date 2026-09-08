@@ -73,6 +73,19 @@ describe('settings toggles html', () => {
   });
 });
 
+describe('options layout sections', () => {
+  it('renders minimal-line sections with preserved ids', () => {
+    const html = readFileSync(resolve(process.cwd(), 'src/options/options.html'), 'utf8');
+    for (const id of ['bcf-count', 'bcf-block-ads', 'bcf-block-promos', 'bcf-paused', 'bcf-status', 'bcf-categories', 'bcf-videos', 'bcf-upers', 'bcf-export', 'bcf-import-file', 'bcf-clear', 'bcf-import-result']) {
+      expect(html).toContain(`id="${id}"`);
+    }
+    expect(html).toContain('分类卡片屏蔽');
+    expect(html).toContain('角标精确匹配 · 命中即打码');
+    expect(html).toContain('已屏蔽 UP 主');
+    expect(html).toContain('数据');
+  });
+});
+
 describe('renderCategories', () => {
   it('renders one toggle per category and reports changes', () => {
     const c = document.createElement('div');
