@@ -1,5 +1,7 @@
 # Bili Catfish
 
+[![Chrome Web Store](https://img.shields.io/chrome-web-store/v/bcdjalhonemelcdclkcfhblgilgmjccb?logo=googlechrome&logoColor=white)](https://chromewebstore.google.com/detail/bili-catfish/bcdjalhonemelcdclkcfhblgilgmjccb)
+
 Bili Catfish 是一个 Bilibili 网页端浏览器扩展（Chrome，Manifest V3）。它记住你在 Bilibili 原生界面表达过的「不感兴趣」，在相同视频或相同 UP 主的内容再次出现时将其模糊遮挡——悬停可临时查看，点击仍可正常观看，随时可解除。
 
 所有数据只存在你的浏览器本地。没有账号系统，没有服务器，没有统计埋点。
@@ -20,7 +22,11 @@ Bili Catfish 是一个 Bilibili 网页端浏览器扩展（Chrome，Manifest V3�
 
 ## 安装
 
-### 从源码构建（当前方式）
+### Chrome Web Store（推荐）
+
+从 [Chrome Web Store](https://chromewebstore.google.com/detail/bili-catfish/bcdjalhonemelcdclkcfhblgilgmjccb) 安装，后续版本更新自动推送。
+
+### 从源码构建（开发者）
 
 ```bash
 npm install
@@ -28,10 +34,6 @@ npm run build
 ```
 
 Chrome 打开 `chrome://extensions`，开启「开发者模式」，选择「加载已解压的扩展程序」，指向 `dist/` 目录。
-
-### Chrome Web Store
-
-正在准备上架，上架后本节会更新商店链接。
 
 ## 隐私
 
