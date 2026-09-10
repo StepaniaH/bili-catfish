@@ -1,7 +1,7 @@
 {
   "name": "bili-catfish",
   "private": true,
-  "version": "0.0.1",
+  "version": "0.0.2",
   "scripts": {
     "build": "node build.mjs",
     "pack": "npm run build && rm -rf release && mkdir -p release && cd dist && zip -qr \"../release/bili-catfish-$npm_package_version.zip\" .",

@@ -1,7 +1,7 @@
 {
   "manifest_version": 3,
   "name": "Bili Catfish",
-  "version": "0.0.1",
+  "version": "0.0.2",
   "description": "记住你在 Bilibili 表达过的「不感兴趣」，并持续遮挡这些内容。",
   "permissions": [
     "storage"
