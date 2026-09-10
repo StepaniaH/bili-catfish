@@ -7,6 +7,7 @@ const extension = process.env.CWS_EXTENSION_ID;
 const [cmd, zipPath] = process.argv.slice(2);
 
 const base = `https://chromewebstore.googleapis.com/v2/publishers/${publisher}/items/${extension}`;
+const uploadBase = `https://chromewebstore.googleapis.com/upload/v2/publishers/${publisher}/items/${extension}`;
 
 async function accessToken() {
   const now = Math.floor(Date.now() / 1000);
@@ -47,7 +48,7 @@ if (cmd === 'status') {
 }
 
 if (cmd === 'upload') {
-  const res = await fetch(`${base}:upload?uploadType=media`, {
+  const res = await fetch(`${uploadBase}:upload`, {
     method: 'POST',
     headers: { ...auth, 'content-type': 'application/zip' },
     body: readFileSync(zipPath),
@@ -58,7 +59,7 @@ if (cmd === 'upload') {
 }
 
 if (cmd === 'publish') {
-  const res = await fetch(`${base}:submitForReview`, { method: 'POST', headers: auth });
+  const res = await fetch(`${base}:publish`, { method: 'POST', headers: auth });
   console.log(`HTTP ${res.status}`);
   console.log(JSON.stringify(await res.json(), null, 2));
   process.exit(res.ok ? 0 : 1);
