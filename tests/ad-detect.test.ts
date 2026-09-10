@@ -1,6 +1,6 @@
 // @vitest-environment jsdom
 import { describe, it, expect } from 'vitest';
-import { isAdCard, AD_BADGE_TEXTS, isCourseCard, isPromoCard, CATEGORY_BADGES, isCategoryCard } from '../src/content/ad-detect';
+import { isAdCard, AD_BADGE_TEXTS, isCourseCard, isPromoCard, CATEGORY_BADGES, isCategoryCard, extractCreativeId } from '../src/content/ad-detect';
 import { CATEGORY_KEYS } from '../src/shared/types';
 
 function cardWith(html: string): HTMLElement {
@@ -83,6 +83,57 @@ describe('isPromoCard', () => {
     const card = document.createElement('div');
     card.innerHTML = '<div class="bili-video-card__stats"><i class="vui_icon other-icon"></i></div>';
     expect(isPromoCard(card)).toBe(false);
+  });
+});
+
+describe('isPromoCard 加宽', () => {
+  it('detects rocket svg without vui_icon outside stats--left', () => {
+    const card = document.createElement('div');
+    card.innerHTML = '<svg class="bili-video-card__stats--icon"></svg>';
+    expect(isPromoCard(card)).toBe(true);
+  });
+
+  it('does not match play/danmaku icons inside stats--left', () => {
+    const card = document.createElement('div');
+    card.innerHTML = '<div class="bili-video-card__stats--left"><svg class="bili-video-card__stats--icon"></svg></div>';
+    expect(isPromoCard(card)).toBe(false);
+  });
+});
+
+describe('isAdCard 加宽', () => {
+  it('detects stats--ad wrapper even when inside a video link', () => {
+    const card = document.createElement('div');
+    card.innerHTML = '<a href="//www.bilibili.com/video/BV1x"><div class="bili-video-card__stats"><span class="bili-video-card__stats--ad"><span>广告</span></span></div></a>';
+    expect(isAdCard(card)).toBe(true);
+  });
+
+  it('detects info-area ad markers', () => {
+    const card = document.createElement('div');
+    card.innerHTML = '<div class="bili-video-card__info--ad"></div>';
+    expect(isAdCard(card)).toBe(true);
+    const card2 = document.createElement('div');
+    card2.innerHTML = '<svg class="bili-video-card__info--ad-creative"></svg>';
+    expect(isAdCard(card2)).toBe(true);
+  });
+
+  it('still rejects 广告 text inside a title link without stats container', () => {
+    const card = document.createElement('div');
+    card.innerHTML = '<a href="//www.bilibili.com/video/BV1x"><span>广告</span></a>';
+    expect(isAdCard(card)).toBe(false);
+  });
+});
+
+describe('extractCreativeId', () => {
+  it('reads creative_id from card links', () => {
+    const card = document.createElement('div');
+    card.innerHTML = '<a href="https://www.bilibili.com/video/BV1x?trackid=1&creative_id=3358499029&native_mode=1"></a>';
+    expect(extractCreativeId(card)).toBe('3358499029');
+  });
+
+  it('returns null without the param', () => {
+    const card = document.createElement('div');
+    card.innerHTML = '<a href="//www.bilibili.com/video/BV1x"></a>';
+    expect(extractCreativeId(card)).toBeNull();
   });
 });
 

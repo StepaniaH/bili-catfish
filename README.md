@@ -40,7 +40,7 @@ Chrome 打开 `chrome://extensions`，开启「开发者模式」，选择「加
 - 屏蔽数据仅保存在浏览器本地 `chrome.storage.local`，不上传、不同步、不收集任何账号信息。
 - 扩展仅向 `api.bilibili.com` 发起只读的视频信息查询（把卡片链接换算成 aid/bvid 与 UP 主 mid，用于规则匹配），不携带任何本地数据。
 - 不请求 bilibili.com 以外的任何站点，不含统计、埋点或远程配置。
-- 捕获「不感兴趣」依赖向页面注入的请求观察脚本（`MAIN` world），仅识别 `feedback/dislike` 与 `feedback/dislike/cancel` 两类请求，不做其它用途。
+- 捕获「不感兴趣」与广告识别依赖向页面注入的请求观察脚本（`MAIN` world）：只读识别 `feedback/dislike`、`feedback/dislike/cancel` 请求，以及首页/搜索/相关推荐接口的响应数据（仅用于本地识别广告/推广卡片），不做其它用途，不上传任何数据。
 
 权限说明：`storage` 用于本地保存规则；`api.bilibili.com` 主机权限仅用于上述只读查询；内容脚本仅在 Bilibili 相关页面运行。
 

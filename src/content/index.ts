@@ -1,10 +1,11 @@
 import { extractAid } from '../core/bili-ids';
 import { extractDislike } from '../core/endpoints';
-import { isAdCard, isCategoryCard, isCourseCard, isPromoCard } from './ad-detect';
+import { extractCreativeId, isAdCard, isCategoryCard, isCourseCard, isPromoCard } from './ad-detect';
 import { matchCard, type CardIdentity } from '../core/match';
 import type { BlockState } from '../shared/types';
 import { addUperRule, addVideoRule, createChromeStorage, loadState, onStateChange, removeUperRule, removeVideoRule } from '../shared/store';
-import { installCaptureForwarding } from './capture-forward';
+import { installCaptureForwarding, installResponseForwarding } from './capture-forward';
+import { createAdFlags, type AdKind } from './ad-flags';
 import { createLookup, cacheKey, type LookupInfo, type CachedLookup } from './lookup';
 import { pageKind, scanCards, extractSpaceMid, type CardRef } from './scan';
 import { applyOverlay, isOverlayed, removeOverlay } from './overlay';
@@ -16,6 +17,7 @@ export interface ReconcileDeps {
   applyOverlay: typeof applyOverlay;
   removeOverlay: typeof removeOverlay;
   backfillUperName: (mid: string, name: string) => Promise<void>;
+  adKind?: (key: { bvid?: string | null; aid?: string | null; creativeId?: string | null }) => AdKind | null;
 }
 
 export interface ReconcileStats {
@@ -35,8 +37,15 @@ export async function reconcileCards(
     return stats;
   }
   const masked = new Set<Element>();
-  const adHitOf = (el: Element): boolean => state.blockAds && isAdCard(el);
-  const promoHitOf = (el: Element): boolean => state.blockPromos && isPromoCard(el);
+  const semanticOf = (c: CardRef): AdKind | null => {
+    if (!deps.adKind) return null;
+    const direct = deps.adKind({ bvid: c.bvid, aid: c.aid });
+    if (direct) return direct;
+    const creativeId = extractCreativeId(c.el);
+    return creativeId ? deps.adKind({ creativeId }) : null;
+  };
+  const adHitOf = (el: Element, semantic: AdKind | null): boolean => state.blockAds && (isAdCard(el) || semantic === 'ad');
+  const promoHitOf = (el: Element, semantic: AdKind | null): boolean => state.blockPromos && (isPromoCard(el) || semantic === 'promo');
   const categoryHitOf = (el: Element): { hit: boolean; name?: string } => {
     for (const [key, on] of Object.entries(state.blockedCategories)) {
       if (!on) continue;
@@ -48,9 +57,10 @@ export async function reconcileCards(
 
   // 阶段 1：无网络 —— 视频规则（DOM id 直接匹配）+ 广告
   for (const c of cards) {
+    const semantic = semanticOf(c);
     const hit = matchCard(state, { aid: c.aid, bvid: c.bvid, mid: null });
-    const adHit = adHitOf(c.el);
-    const promoHit = promoHitOf(c.el);
+    const adHit = adHitOf(c.el, semantic);
+    const promoHit = promoHitOf(c.el, semantic);
     const category = categoryHitOf(c.el);
     if (hit.video || adHit || promoHit || category.hit) {
       deps.applyOverlay(c.el, {
@@ -80,9 +90,10 @@ export async function reconcileCards(
         bvid: info?.bvid ?? c.bvid,
         mid: info?.mid ?? null,
       };
+      const semantic = semanticOf(c);
       const hit = matchCard(state, identity);
-      const adHit = adHitOf(c.el);
-      const promoHit = promoHitOf(c.el);
+      const adHit = adHitOf(c.el, semantic);
+      const promoHit = promoHitOf(c.el, semantic);
       const category = categoryHitOf(c.el);
       if (hit.video || hit.uper || adHit || promoHit || category.hit) {
         deps.applyOverlay(c.el, {
@@ -114,6 +125,7 @@ export async function reconcileCards(
 /* ---------- 装配（生产入口） ---------- */
 
 const storage = createChromeStorage();
+const adFlags = createAdFlags();
 const sessionRead =
   typeof chrome !== 'undefined' && chrome.storage?.session
     ? async (key: string): Promise<CachedLookup | undefined> => {
@@ -123,6 +135,7 @@ const sessionRead =
     : undefined;
 const lookup = createLookup((msg) => chrome.runtime.sendMessage(msg), sessionRead);
 let toastTimer: ReturnType<typeof setTimeout> | null = null;
+let requestScan: (() => void) | null = null;
 
 function showToast(text: string): void {
   document.querySelector('.bcf-toast')?.remove();
@@ -310,6 +323,7 @@ function installRescan(): void {
         {
           getState: () => loadState(storage),
           lookupInfo: (keys) => lookup.lookup(keys),
+          adKind: (key) => adFlags.locate(key),
           applyOverlay,
           removeOverlay,
           backfillUperName: async (mid, name) => {
@@ -345,6 +359,7 @@ function installRescan(): void {
       t = setTimeout(() => void scan(), 100);
     };
   })();
+  requestScan = debounced;
   const mo = new MutationObserver(debounced);
   mo.observe(document.body, { childList: true, subtree: true });
   offState = onStateChange(storage, () => debounced());
@@ -370,6 +385,9 @@ function main(): void {
   }
   installCaptureForwarding((url, body) => {
     recordCapture(url, body).catch(() => {});
+  });
+  installResponseForwarding((url, text) => {
+    if (adFlags.ingest(url, text)) requestScan?.();
   });
   installDomFallback();
   installRescan();

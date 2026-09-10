@@ -12,13 +12,14 @@ function makeCard(bvid: string): HTMLElement {
 }
 
 function makeDeps(over: Partial<ReconcileDeps> & Partial<BlockState> = {}): ReconcileDeps {
-  const { getState, lookupInfo, applyOverlay, removeOverlay, backfillUperName, ...stateOver } = over;
+  const { getState, lookupInfo, applyOverlay, removeOverlay, backfillUperName, adKind, ...stateOver } = over;
   return {
     getState: getState ?? (async () => ({ ...state, ...stateOver })),
     lookupInfo: lookupInfo ?? vi.fn(async () => new Map()),
     applyOverlay: applyOverlay ?? vi.fn(),
     removeOverlay: removeOverlay ?? vi.fn(),
     backfillUperName: backfillUperName ?? vi.fn(async () => {}),
+    adKind,
   };
 }
 
@@ -286,5 +287,50 @@ describe('reconcileCards', () => {
     deps.lookupInfo = vi.fn(async () => new Map([['bvid:BV1abc0000000', { aid: '100', bvid: 'BV1abc0000000', mid: '42', title: '', upName: '熊哥 BigBearTV' }]]));
     await reconcileCards([{ el, bvid: 'BV1abc0000000', aid: null }], deps);
     expect(backfillUperName).not.toHaveBeenCalled();
+  });
+
+  it('masks promo card via semantic flag without any DOM rocket', async () => {
+    const el = document.createElement('div');
+    el.innerHTML = '<a href="/video/BV1semantic00">t</a>';
+    state = emptyState();
+    state.blockPromos = true;
+    const deps = makeDeps({ adKind: vi.fn(() => 'promo' as const) });
+    const n = await reconcileCards([{ el, bvid: 'BV1semantic00', aid: null }], deps);
+    expect(n.masked).toBe(1);
+    expect(deps.applyOverlay).toHaveBeenCalledWith(el, expect.objectContaining({ promoHit: true, adHit: false }));
+  });
+
+  it('does not mask semantic promo when blockPromos off', async () => {
+    const el = document.createElement('div');
+    el.innerHTML = '<a href="/video/BV1semantic00">t</a>';
+    state = emptyState();
+    const deps = makeDeps({ adKind: vi.fn(() => 'promo' as const) });
+    await reconcileCards([{ el, bvid: 'BV1semantic00', aid: null }], deps);
+    expect(deps.applyOverlay).not.toHaveBeenCalled();
+  });
+
+  it('masks ad card via semantic flag when blockAds on', async () => {
+    const el = document.createElement('div');
+    el.innerHTML = '<a href="/video/BV1semantic00">t</a>';
+    state = emptyState();
+    state.blockAds = true;
+    const deps = makeDeps({ adKind: vi.fn(() => 'ad' as const) });
+    await reconcileCards([{ el, bvid: 'BV1semantic00', aid: null }], deps);
+    expect(deps.applyOverlay).toHaveBeenCalledWith(el, expect.objectContaining({ adHit: true, promoHit: false }));
+  });
+
+  it('matches semantic flag by creative_id from card link', async () => {
+    const el = document.createElement('div');
+    el.innerHTML = '<a href="/video/BV1semantic00?creative_id=42">t</a>';
+    state = emptyState();
+    state.blockPromos = true;
+    const adKind = vi.fn(
+      (key: { bvid?: string | null; aid?: string | null; creativeId?: string | null }) =>
+        key.creativeId === '42' ? ('promo' as const) : null,
+    );
+    const deps = makeDeps({ adKind });
+    const n = await reconcileCards([{ el, bvid: 'BV1semantic00', aid: null }], deps);
+    expect(adKind).toHaveBeenCalledWith(expect.objectContaining({ creativeId: '42' }));
+    expect(n.masked).toBe(1);
   });
 });

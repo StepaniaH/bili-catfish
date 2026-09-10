@@ -4,7 +4,7 @@ export const AD_BADGE_TEXTS = ['广告', '推广'];
 export const COURSE_BADGE_TEXTS = ['课堂'];
 
 function isBadgeElement(el: Element, texts: string[]): boolean {
-  if (el.closest('a[href*="/video/"]')) return false;
+  if (el.closest('a[href*="/video/"]') && !el.closest('.bili-video-card__stats')) return false;
   return texts.includes((el.textContent ?? '').trim());
 }
 
@@ -31,6 +31,9 @@ function hasBadge(card: Element, pred: (el: Element) => boolean): boolean {
 }
 
 export function isAdCard(card: Element): boolean {
+  if (card.querySelector('.bili-video-card__stats--ad, .bili-video-card__info--ad, .bili-video-card__info--ad-creative') !== null) {
+    return true;
+  }
   return hasBadge(card, isAdBadgeElement);
 }
 
@@ -40,7 +43,18 @@ export function isCourseCard(card: Element): boolean {
 }
 
 export function isPromoCard(card: Element): boolean {
-  return card.querySelector('.vui_icon.bili-video-card__stats--icon') !== null;
+  if (card.querySelector('.vui_icon.bili-video-card__stats--icon') !== null) return true;
+  const icons = card.querySelectorAll('.bili-video-card__stats--icon');
+  for (const icon of Array.from(icons)) {
+    if (!icon.closest('.bili-video-card__stats--left')) return true;
+  }
+  return false;
+}
+
+export function extractCreativeId(card: Element): string | null {
+  const href = card.querySelector<HTMLAnchorElement>('a[href*="creative_id="]')?.getAttribute('href') ?? '';
+  const m = /[?&]creative_id=(\d+)/.exec(href);
+  return m ? m[1]! : null;
 }
 
 export const CATEGORY_BADGES: Record<string, string[]> = Object.fromEntries(

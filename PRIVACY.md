@@ -10,7 +10,7 @@ Your blocking rules (video IDs, uploader IDs, toggle settings) are saved only in
 
 The extension makes read-only queries to Bilibili's official endpoint (`https://api.bilibili.com/x/web-interface/view`) to convert video card links into stable IDs for local matching. No user data, rules, or identifiers of your browser are sent with these queries. / 扩展对 Bilibili 官方接口发起只读查询，把视频卡片链接换算成稳定的 ID 用于本地匹配。查询不携带任何用户数据、规则或浏览器标识。
 
-The extension also observes the user's own "not interested" / "cancel" requests (`feedback/dislike`, `feedback/dislike/cancel`) on Bilibili pages to record or remove rules locally. / 扩展在 Bilibili 页面上观察用户自己触发的「不感兴趣 / 撤销」请求，用于在本地记录或解除规则。
+The extension also observes, read-only and entirely in-page, the user's own "not interested" / "cancel" requests (`feedback/dislike`, `feedback/dislike/cancel`) and the JSON responses of Bilibili's recommendation / search / related feeds, to record/remove rules and to identify ad or promoted cards locally. Observed data never leaves the browser and no extra requests are made. / 扩展在 Bilibili 页面内只读观察用户自己触发的「不感兴趣 / 撤销」请求（`feedback/dislike`、`feedback/dislike/cancel`），以及推荐流 / 搜索 / 相关推荐的响应数据，用于在本地记录或解除规则、识别广告与推广卡片。观察到的数据不会离开浏览器，也不会发起额外请求。
 
 ## What we do NOT do / 我们不做的事
 
